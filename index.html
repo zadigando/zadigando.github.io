@@ -3,21 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfólio - Zadigando</title>
+    <title>Zadig de Bem</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
-    <header>
-        <h1>Portfólio de Projetos</h1>
-        <p>Confira meus projetos no GitHub!</p>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="header-logo-container">
+                <div class="header-logo-image-container">
+                    <img src="https://i.postimg.cc/Gp6HryQ2/1726503580029.jpg" alt="Foto Zadig de Bem" class="header-logo-image">
+                </div>
+                <span class="header-logo-text">Zadig de Bem</span>
+            </div>
+            <div class="header-main">
+                <ul class="header-links">
+                    <li class="header-links-wrapper">Home</li>
+                    <li class="header-links-wrapper"><a href="#about">Sobre</a></li>
+                    <li class="header-links-wrapper">Projetos</li>
+                    <li class="header-links-wrapper">Contato</li>
+                </ul>
+            </div>
+        </div>
     </header>
 
-    <main>
-        <div id="repos-container">
-            <p>Carregando repositórios...</p>
+    <section class="home">
+        <div class="home-content">
+            <h1 class="heading-primary">E aí! Eu sou Zadig de Bem</h1>
+            <div class="home-info">
+                <p class="text-primary">
+                    Desenvolvedor Full Stack apaixonado por tecnologia, inovação e criação de experiências digitais impactantes.
+                </p>
+            </div>
+            <div class="home-cta">
+                <a href="./" class="btn btn--bg">Meus Projetos</a>
+            </div>
         </div>
-    </main>
+    
+        <div class="home-socials">
+            <a href="https://github.com/zadigando" target="_blank" class="home-social-icon-link">
+                <i class="fa-brands fa-github"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank" class="home-social-icon-link">
+                <i class="fa-brands fa-linkedin"></i>
+            </a>
+        </div>
+    </section>
 
+    <section id="about" class="about">
+        <div class="about-content">
+            <h2 class="heading-primary-about">Sobre Mim</h2>
+            <div class="about-info">
+                <p class="text-primary">
+                    Aqui você encontrará mais informações sobre mim, o que faço e minhas habilidades no desenvolvimento Full Stack e tecnologia.
+                </p>
+            </div>
+            <div class="about-main">
+                <div class="about-description">
+                    <h3 class="about-title">Conheça mais sobre mim!</h3>
+                    <div class="about-text">
+                        <p>
+                            Sou um <strong>Desenvolvedor Full Stack</strong> apaixonado por tecnologia e inovação, criando aplicações web modernas que impactam positivamente os usuários. Confira alguns dos meus projetos na seção <strong>Projetos</strong>.
+                        </p>
+                        <p>
+                            Gosto de compartilhar conhecimento sobre <strong>desenvolvimento web</strong> e tecnologia, contribuindo com a comunidade de devs. Sinta-se à vontade para me seguir no 
+                            <a rel="noreferrer" href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank">LinkedIn</a>
+                            e no
+                            <a rel="noreferrer" href="https://github.com/zadigando" target="_blank">GitHub</a>
+                            para acompanhar meu trabalho e interagir comigo.
+                        </p>
+                        <p>
+                            Estou aberto a <strong>oportunidades de trabalho</strong> onde eu possa contribuir, aprender e crescer. Se você tem uma oportunidade que se encaixa no meu perfil, não hesite em <strong>entrar em contato</strong>.
+                        </p>
+                    </div>
+                    <a href="./#contact" class="btn btn--bg">Contato</a>
+                </div>
+                <div class="about-skills">
+                    <h3 class="about-title">Minhas Habilidades</h3>
+                    <div class="skills">
+                        <div class="skills-item">HTML</div>
+                            <div class="skills-item">CSS</div>
+                            <div class="skills-item">JavaScript</div>
+                            <div class="skills-item">TypeScript</div>
+                            <div class="skills-item">React</div>
+                            <div class="skills-item">Angular</div>
+                            <div class="skills-item">Python</div>
+                            <div class="skills-item">Django</div>
+                            <div class="skills-item">Flask</div>
+                            <div class="skills-item">Java</div>
+                            <div class="skills-item">C#</div>
+                            <div class="skills-item">.NET</div>
+                            <div class="skills-item">SQL</div>
+                            <div class="skills-item">MySQL</div>
+                            <div class="skills-item">MongoDB</div>
+                            <div class="skills-item">Git</div>
+                            <div class="skills-item">Docker</div>
+                            <div class="skills-item">REST APIs</div>
+                            <div class="skills-item">Web Design</div>
+                            <div class="skills-item">QA Testing</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    
     <script src="script.js"></script>
 </body>
 </html>
