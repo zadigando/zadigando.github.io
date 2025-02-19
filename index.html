@@ -44,8 +44,8 @@
                     Desenvolvedor Full Stack apaixonado por tecnologia, inovação e criação de experiências digitais impactantes.
                 </p>
             </div>
-            <div class="home-cta">
-                <a href="./" class="btn btn--bg">Meus Projetos</a>
+            <div class="home-cta" id="btn-home">
+                <a href="#projects" class="btn btn--bg">Meus Projetos</a>
             </div>
         </div>
     
@@ -134,7 +134,7 @@
                         <p class="project-text">
                             O CarbonoZero é uma plataforma desenvolvida com <strong>Angular</strong> e <strong>C#</strong> para ajudar empresas a monitorar e reduzir suas emissões de carbono. O sistema acompanha as iniciativas sustentáveis e recompensa as empresas com <strong>créditos de carbono</strong>, incentivando práticas ecológicas e responsabilidade ambiental.
                         </p>
-                        <a href="/projeto-1" class="btn btn--bg">Saiba Mais</a>
+                        <a href="/projects/carbonozero.html" class="btn btn--bg">Saiba Mais</a>
                     </div>                    
                 </div>
                 <div class="project-item">
@@ -146,7 +146,20 @@
                         <p class="project-text">
                             O <strong>GZ Artigos Esportivos</strong> é uma plataforma de e-commerce desenvolvida com <strong>Django</strong>, permitindo a compra e gerenciamento de produtos esportivos. O sistema inclui funcionalidades como cadastro de usuários, carrinho de compras, pagamentos e administração de estoque, proporcionando uma experiência completa para lojistas e clientes.
                         </p>
-                        <a href="/projeto-2" class="btn btn--bg">Saiba Mais</a>
+                        <a href="/projects/gzartigosesportivos.html" class="btn btn--bg">Saiba Mais</a>
+                    </div>                    
+                </div>
+                <div class="project-item github-highlight">
+                    <div class="project-image-container">
+                        <img src="/assets/images/github-projects.jpg" alt="Mais Projetos no GitHub" class="project-image">
+                    </div>
+                    <div class="project-description">
+                        <h3 class="project-title">Veja Mais Projetos</h3>
+                        <p class="project-text">
+                            Explore outros projetos desenvolvidos por mim, incluindo <strong>CRUDs com Docker</strong>, <strong>APIs REST</strong> e <strong>projetos em C#, Java e Python</strong>.  
+                            Acesse meu repositório para mais informações!
+                        </p>
+                        <a href="https://github.com/zadigando" target="_blank" class="btn btn--bg">Acessar GitHub</a>
                     </div>                    
                 </div>
             </div>
@@ -160,33 +173,85 @@
                 Fique à vontade para entrar em contato preenchendo o formulário abaixo. Retornarei o mais rápido possível.
             </p>
             <div class="contact-form-container">
-                <form action="https://formsubmit.co/zadigdebem@gmail.com" method="POST">
-                    <input type="hidden" name="_captcha" value="false">
-                    <input type="hidden" name="_subject" value="Novo contato pelo site">
-                    <input type="hidden" name="_autoresponse" value="Recebemos sua mensagem! Em breve entraremos em contato.">
-    
+                <form id="contact-form">
                     <div class="contact-form-field">
                         <label for="name">Nome</label>
                         <input type="text" name="name" id="name" required placeholder="Digite seu nome">
                     </div>
-    
+            
                     <div class="contact-form-field">
                         <label for="email">E-mail</label>
                         <input type="email" name="email" id="email" required placeholder="Digite seu e-mail">
                     </div>
-    
+            
                     <div class="contact-form-field">
                         <label for="message">Mensagem</label>
                         <textarea name="message" id="message" rows="5" required placeholder="Digite sua mensagem"></textarea>
                     </div>
-    
+            
                     <button type="submit" class="btn btn--bg">Enviar</button>
                 </form>
             </div>
+            
         </div>
     </section>
     
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-upper">
+                <div class="footer-row footer-row-1">
+                    <h2 class="heading-sm footer-heading-sm">
+                        <span>Social</span>
+                    </h2>
+                    <div class="footer-socials">
+                        <a target="_blank" rel="noreferrer" href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" class="footer-social-link">
+                            <i class="fa-brands fa-linkedin"></i>
+                        </a>
+                        <a target="_blank" rel="noreferrer" href="https://github.com/zadigando" class="footer-social-link">
+                            <i class="fa-brands fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-row footer-row-2">
+                    <h2 class="heading-sm">Zadig de Bem</h2>
+                    <p class="footer-description">
+                        Desenvolvedor Full Stack apaixonado por tecnologia e inovação, criando soluções digitais impactantes.
+                    </p>
+                </div>
+            </div>
     
-    <script src="/js/script.js"></script>
+            <div class="footer-lower">
+                © Copyright
+                <script>document.write(new Date().getFullYear());</script>.
+                Feito por <a rel="noreferrer" target="_blank" href="#">Zadig de Bem</a>
+            </div>
+        </div>
+    </footer>
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+    (function () {
+        emailjs.init("q2BeVEzrxs2cwcJxC");
+    })();
+
+    document.getElementById("contact-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        emailjs.send("service_oky71nr", "template_hkb77uu", {
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            message: document.getElementById("message").value
+        }).then(function (response) {
+            alert("Mensagem enviada com sucesso!");
+            document.getElementById("contact-form").reset();
+        }, function (error) {
+            alert("Erro ao enviar mensagem. Tente novamente.");
+            console.error("Erro:", error);
+        });
+    });
+</script>
+
 </body>
 </html>
