@@ -148,8 +148,6 @@ body {
     max-width: 90rem;
     width: 50%;
     display: grid;
-    gap: 11%;
-
 }
 
 .heading-primary {
@@ -629,9 +627,17 @@ body {
     .home-socials {
         display: none;
     }
+    .heading-primary-about::after {
+        display: none;
+    }
 }
 
 @media screen and (max-width: 900px) {
+
+    *::after {
+        display: none;
+    }
+
     .projects-list {
         display: flex;
         flex-direction: column;
@@ -685,9 +691,9 @@ body {
     }
 }
 
-/* Estilizando o botão do menu hamburguer */
+
 .menu-toggle {
-    display: none; /* Oculto por padrão em telas grandes */
+    display: none;
     background: none;
     border: none;
     font-size: 28px;
@@ -695,46 +701,128 @@ body {
     color: #333;
 }
 
-/* Responsividade para telas menores que 801px */
+.header-main {
+    display: flex;
+}
+
 @media screen and (max-width: 801px) {
+    .header {
+        position: relative;
+        z-index: 1000;
+    }
+
     .header-main {
-        display: none;
-        width: 100%;
         position: absolute;
-        top: 70px;
+        top: 100%;
         left: 0;
+        width: 100%;
         background-color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         text-align: center;
         padding: 15px 0;
+
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
         transition: all 0.3s ease-in-out;
+        z-index: 999;
+    }
+
+    .menu-toggle {
+        display: block;
     }
 
     .header-main.active {
-        display: block !important; /* Forçando a exibição */
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
     }
 
-    /* Exibir botão de menu hamburguer */
-    .menu-toggle {
-        display: block;
-        background: none;
-        border: none;
-        font-size: 28px;
-        cursor: pointer;
-        color: #333;
-    }
-
-    /* Melhorando o layout dos links */
-    .header-main ul {
+    .header-links {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        align-items: flex-end;
+        padding-right: 20px;
+        width: 100%;
+        text-align: right;
+    }
+
+    .header-links-wrapper {
+        width: 100%;
+        text-align: right;
     }
 
     .header-links-wrapper a {
         display: block;
-        padding: 10px;
-        color: #333;
+        width: 100%;
+        padding: 15px;
         font-size: 18px;
+        color: #333;
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.3s;
+        text-align: right;
+    }
+
+    .header-links-wrapper a:hover {
+        color: #7843E9;
     }
 }
+
+@media screen and (max-width: 900px) {
+    .about-main {
+        display: flex;
+        flex-direction: column; /* Coloca tudo em coluna */
+        align-items: center; /* Centraliza os itens */
+        text-align: center; /* Centraliza o texto */
+    }
+
+    .about-description,
+    .about-skills {
+        width: 100%; /* Garante que ocupem toda a largura */
+        max-width: 90%; /* Mantém um limite para não ficar muito largo */
+    }
+
+    .about-title {
+        text-align: center; /* Centraliza os títulos "Conheça mais sobre mim!" e "Minhas Habilidades" */
+    }
+
+    .about-text p {
+        text-align: center; /* Centraliza os parágrafos */
+    }
+
+    .btn {
+        display: block;
+        margin: 20px auto; /* Centraliza o botão e adiciona espaçamento */
+    }
+
+    .btn {
+        padding: 10px 40px; /* Reduz o tamanho do botão */
+        font-size: 16px; /* Diminui a fonte do botão */
+        max-width: 200px; /* Define um limite máximo de largura */
+    }
+
+    .skills {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center; /* Centraliza as habilidades */
+    }
+}
+
+
+@media screen and (max-width: 553px) {
+    .home {
+        padding-top: 80px; /* Adiciona um espaçamento extra no topo */
+    }
+
+    .heading-primary {
+        font-size: 24px; /* Diminui o tamanho do título para melhor ajuste */
+        text-align: center; /* Centraliza para evitar que quebre de forma estranha */
+    }
+}
+
+
+
+
+
+

@@ -25,20 +25,23 @@
                 </div>
                 <span class="header-logo-text">Zadig de Bem</span>
             </div>
-            <button class="menu-toggle" aria-label="Abrir Menu">
+    
+            <button class="menu-toggle" id="menu-toggle" aria-label="Abrir Menu">
                 <i class="fa-solid fa-bars"></i>
             </button>
-            <nav class="header-main">
-                <ul class="header-links">
-                    <li class="header-links-wrapper">Home</li>
-                    <li class="header-links-wrapper"><a href="#about">Sobre</a></li>
-                    <li class="header-links-wrapper"><a href="#projects">Projetos</a></li>
-                    <li class="header-links-wrapper"><a href="#contact">Contato</a></li>
-                </ul>
-            </nav>
         </div>
+    
+        <nav class="header-main" id="menu">
+            <ul class="header-links">
+                <li class="header-links-wrapper"><a href="#home">Home</a></li>
+                <li class="header-links-wrapper"><a href="#about">Sobre</a></li>
+                <li class="header-links-wrapper"><a href="#projects">Projetos</a></li>
+                <li class="header-links-wrapper"><a href="#contact">Contato</a></li>
+            </ul>
+        </nav>
     </header>
-
+    
+    
     <section class="home">
         <div class="home-content">
             <h1 class="heading-primary">Olá! Eu sou Zadig de Bem</h1>
@@ -239,8 +242,9 @@
     
     
     
-    
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/js/script.js"></script>   
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script>
     (function () {
         emailjs.init("q2BeVEzrxs2cwcJxC");
@@ -263,8 +267,5 @@
     });
 
 </script>
-
-<script src="/js/script.js"></script>
-
 </body>
 </html>
