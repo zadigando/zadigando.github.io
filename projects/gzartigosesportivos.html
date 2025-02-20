@@ -44,7 +44,7 @@
                 </p>
             </div>
             <div class="home-cta">
-                <a href="https://github.com/zadigando/CarbonoZero" class="btn btn--bg">Link do Projeto</a>
+                <a href="https://github.com/zadigando/GZArtigosEsportivos" class="btn btn--bg">Link do Projeto</a>
             </div>
         </div>
         <div class="home-socials">
@@ -65,20 +65,19 @@
             <h2 class="heading-primary-projects">Visão Geral do Projeto</h2>
             <div class="projects-info">
                 <p class="text-primary">
-                    O CarbonoZero é uma plataforma desenvolvida com <strong>Angular</strong> e <strong>C#</strong> para ajudar empresas a monitorar e reduzir suas emissões de carbono. O sistema acompanha as iniciativas sustentáveis e recompensa as empresas com <strong>créditos de carbono</strong>, incentivando práticas ecológicas e responsabilidade ambiental.                </p>
+                    O <strong>GZ Artigos Esportivos</strong> é uma plataforma de e-commerce desenvolvida com <strong>Django</strong>, focada na venda e gestão de produtos esportivos. 
+                    O sistema permite que lojistas cadastrem produtos, gerenciem pedidos, acompanhem estoques em tempo real e integrem meios de pagamento online de forma intuitiva.
+                </p>             
             </div>
-            <div class="projects-list">
-                <div class="project-item">
-                    <div class="project-image-container">
-                        <img src="/assets/images/gzartigosesportivos.jpg" alt="Projeto 1" class="project-image">
-                    </div>
-                    <div class="project-description">
-                        <h3 class="project-title">GZ Artigos Esportivos</h3>
-                        <p class="project-text">
-                            Ao lado é a tela inicial da loja GZ Artigos Esportivos
-                        </p>
-                    </div>                    
+            <div class="carousel-container">
+                <div class="carousel">
+                    <img src="/assets/images/gzartigosesportivos.jpg" alt="Imagem 1" class="carousel-image">
+                    <img src="/assets/images/gzartigosesportivos.jpg" alt="Imagem 2" class="carousel-image">
+                    <img src="/assets/images/gzartigosesportivos.jpg" alt="Imagem 3" class="carousel-image">
+                    <img src="/assets/images/gzartigosesportivos.jpg" alt="Imagem 1" class="carousel-image">
                 </div>
+                <button class="carousel-btn prev" onclick="prevSlide()">&#10094;</button>
+                <button class="carousel-btn next" onclick="nextSlide()">&#10095;</button>
             </div>
         </div>
     </section>
@@ -124,7 +123,9 @@
         <div class="footer-container">
             <div class="footer-upper">
                 <div class="footer-row footer-row-1">
-                    <h2 class="heading-sm">Social</h2>
+                    <h2 class="heading-sm footer-heading-sm">
+                        <span>Social</span>
+                    </h2>
                     <div class="footer-socials">
                         <a target="_blank" rel="noreferrer" href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" class="footer-social-link">
                             <i class="fa-brands fa-linkedin"></i>
@@ -144,11 +145,14 @@
                     </p>
                 </div>
             </div>
+    
             <div class="footer-lower">
-                © <script>document.write(new Date().getFullYear());</script>. Feito por Zadig de Bem.
+                © Copyright
+                <script>document.write(new Date().getFullYear());</script>.
+                Feito por <a rel="noreferrer" target="_blank" href="/index.html">Zadig de Bem</a>
             </div>
         </div>
     </footer>
-
+<script src="/js/script.js"></script>
 </body>
 </html>
