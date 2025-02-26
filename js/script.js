@@ -77,3 +77,53 @@ if (carousel && slides.length > 0) {
     nextBtn.addEventListener("click", resetAutoSlide);
   }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  const aboutSection = document.querySelector(".about");
+
+  function checkVisibility() {
+    const rect = aboutSection.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.75) {
+      aboutSection.classList.add("show");
+    }
+  }
+
+  window.addEventListener("scroll", checkVisibility);
+  checkVisibility();
+});
+
+function startCounter() {
+  const stats = document.querySelectorAll(".stat-number");
+
+  stats.forEach((stat) => {
+    let target = +stat.getAttribute("data-target");
+    let count = 0;
+    let increment = target / 100; // Ajuste para um incremento suave
+
+    let updateCounter = setInterval(() => {
+      count += increment;
+      stat.innerText = Math.floor(count);
+
+      if (count >= target) {
+        stat.innerText = target;
+        clearInterval(updateCounter);
+      }
+    }, 30); // Tempo entre cada incremento
+  });
+}
+
+// Dispara a animação quando a seção "Sobre Mim" estiver visível
+document.addEventListener("DOMContentLoaded", function () {
+  const aboutSection = document.querySelector(".about");
+
+  function checkVisibility() {
+    const rect = aboutSection.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.75) {
+      startCounter();
+      window.removeEventListener("scroll", checkVisibility); // Evita reativar o contador
+    }
+  }
+
+  window.addEventListener("scroll", checkVisibility);
+  checkVisibility();
+});

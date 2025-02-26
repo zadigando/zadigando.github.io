@@ -59,15 +59,17 @@
         <div class="home-content">
             <h1 class="heading-primary">Olá! Eu sou Zadig de Bem</h1>
             <div class="home-info">
-                <p class="text-primary">
+                <p class="text-primary" id="text-primary-index">
                     Desenvolvedor Full Stack apaixonado por tecnologia, inovação e criação de experiências digitais impactantes.
                 </p>
             </div>
             <div class="home-cta" id="btn-home">
-                <a href="#projects" class="btn btn--bg">Meus Projetos</a>
+                <a href="#projects" class="btn btn--bg" id="btn-home">Meus Projetos</a>
             </div>
         </div>
-
+        <div class="home-hero__mouse-scroll-cont">
+            <div class="mouse"></div>
+        </div>
         <div class="home-socials">
             <a href="https://github.com/zadigando" target="_blank" class="home-social-icon-link">
                 <i class="fa-brands fa-github"></i>
@@ -91,6 +93,9 @@
             </div>
             <div class="about-main">
                 <div class="about-description">
+                    <div class="about-image">
+                        <img src="/assets/images/android-chrome-192x192.png" alt="Zadig de Bem - Desenvolvedor Full Stack">
+                    </div>
                     <h3 class="about-title">Conheça mais sobre mim!</h3>
                     <div class="about-text">
                         <p>
@@ -109,34 +114,82 @@
                     </div>
                     <a href="./#contact" class="btn btn--bg">Contato</a>
                 </div>
-                <div class="about-skills">
-                    <h3 class="about-title">Minhas Habilidades</h3>
-                    <div class="skills">
-                        <div class="skills-item">HTML</div>
-                        <div class="skills-item">CSS</div>
-                        <div class="skills-item">JavaScript</div>
-                        <div class="skills-item">TypeScript</div>
-                        <div class="skills-item">React</div>
-                        <div class="skills-item">Angular</div>
-                        <div class="skills-item">Python</div>
-                        <div class="skills-item">Django</div>
-                        <div class="skills-item">Flask</div>
-                        <div class="skills-item">Java</div>
-                        <div class="skills-item">C#</div>
-                        <div class="skills-item">.NET</div>
-                        <div class="skills-item">SQL</div>
-                        <div class="skills-item">MySQL</div>
-                        <div class="skills-item">MongoDB</div>
-                        <div class="skills-item">Git</div>
-                        <div class="skills-item">Docker</div>
-                        <div class="skills-item">REST APIs</div>
-                        <div class="skills-item">Web Design</div>
-                        <div class="skills-item">QA Testing</div>
+
+
+                <div class="about-right">
+                    <div class="about-stats">
+                        <div class="stat">
+                            <h3 class="stat-number" data-target="15">0</h3>
+                            <p>Projetos Concluídos</p>
+                        </div>
+                        <div class="stat">
+                            <h3 class="stat-number" data-target="3">0</h3>
+                            <p>Anos de Experiência</p>
+                        </div>
+                        <div class="stat">
+                            <h3 class="stat-number" data-target="12">0</h3>
+                            <p>Tecnologias Dominadas</p>
+                        </div>
+                    </div>
+
+                    <div class="about-skills">
+                        <h3 class="about-title">Minhas Habilidades</h3>
+                        <div class="skills">
+                            <div class="skills-item"><i class="fa-brands fa-html5"></i> HTML</div>
+                            <div class="skills-item"><i class="fa-brands fa-css3-alt"></i> CSS</div>
+                            <div class="skills-item"><i class="fa-brands fa-js"></i> JavaScript</div>
+                            <div class="skills-item"><i class="fa-solid fa-code"></i> TypeScript</div>
+                            <div class="skills-item"><i class="fa-brands fa-react"></i> React</div>
+                            <div class="skills-item"><i class="fa-brands fa-angular"></i> Angular</div>
+                            <div class="skills-item"><i class="fa-brands fa-python"></i> Python</div>
+                            <div class="skills-item"><i class="fa-solid fa-database"></i> Django</div>
+                            <div class="skills-item"><i class="fa-solid fa-flask"></i> Flask</div>
+                            <div class="skills-item"><i class="fa-brands fa-java"></i> Java</div>
+                            <div class="skills-item"><i class="fa-solid fa-code"></i> C#</div>
+                            <div class="skills-item"><i class="fa-brands fa-microsoft"></i> .NET</div>
+                            <div class="skills-item"><i class="fa-solid fa-database"></i> SQL</div>
+                            <div class="skills-item"><i class="fa-solid fa-database"></i> MySQL</div>
+                            <div class="skills-item"><i class="fa-solid fa-database"></i> MongoDB</div>
+                            <div class="skills-item"><i class="fa-brands fa-git-alt"></i> Git</div>
+                            <div class="skills-item"><i class="fa-brands fa-docker"></i> Docker</div>
+                            <div class="skills-item"><i class="fa-solid fa-network-wired"></i> REST APIs</div>
+                            <div class="skills-item"><i class="fa-solid fa-palette"></i> Web Design</div>
+                            <div class="skills-item"><i class="fa-solid fa-bug"></i> QA Testing</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="about-timeline">
+                <h3 class="about-title">Minha Jornada</h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                        <div class="timeline-content">
+                            <h4>Centro Universitário Barão de Mauá</h4>
+                            <p>Bacharelado em Ciência da Computação <strong>Período:</strong> 2021 - 2024</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-icon"><i class="fa-solid fa-briefcase"></i></div>
+                        <div class="timeline-content">
+                            <h4>Suporte Técnico - USP</h4>
+                            <p>Forneci suporte técnico, resolvi problemas de hardware/software e documentei processos técnicos.</p>
+                            <p><strong>Período:</strong> 2022 - 2023</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-icon"><i class="fa-solid fa-code"></i></div>
+                        <div class="timeline-content">
+                            <h4>Desenvolvedor Full Stack Jr</h4>
+                            <p>Corrigi bugs, implementei novas funcionalidades e melhorei a performance de aplicações web.</p>
+                            <p><strong>Período:</strong> 2021 - 2022</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
+
 
     <section id="projects" class="projects">
         <div class="projects-content">
