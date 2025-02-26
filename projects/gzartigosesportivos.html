@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/android-chrome-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/assets/images/android-chrome-512x512.png">
 </head>
+
 <body>
 
     <header class="header">
@@ -24,15 +26,20 @@
                 </div>
                 <span class="header-logo-text">Zadig de Bem</span>
             </div>
-            <div class="header-main">
-                <ul class="header-links">
-                    <li class="header-links-wrapper"><a href="/">Home</a></li>
-                    <li class="header-links-wrapper"><a href="/#about">Sobre</a></li>
-                    <li class="header-links-wrapper"><a href="/#projects">Projetos</a></li>
-                    <li class="header-links-wrapper"><a href="/#contact">Contato</a></li>
-                </ul>
-            </div>
+
+            <button class="menu-toggle" id="menu-toggle" aria-label="Abrir Menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
         </div>
+
+        <nav class="header-main" id="menu">
+            <ul class="header-links">
+                <li class="header-links-wrapper"><a href="#home">Home</a></li>
+                <li class="header-links-wrapper"><a href="#about">Sobre</a></li>
+                <li class="header-links-wrapper"><a href="#projects">Projetos</a></li>
+                <li class="header-links-wrapper"><a href="#contact">Contato</a></li>
+            </ul>
+        </nav>
     </header>
 
     <section class="home">
@@ -40,7 +47,7 @@
             <h1 class="heading-primary">GZ Artigos Esportivos</h1>
             <div class="home-info">
                 <p class="text-primary">
-                    O <strong>GZ Artigos Esportivos</strong> é uma plataforma de e-commerce desenvolvida com <strong>Django</strong>, permitindo a compra e gerenciamento de produtos esportivos. O sistema inclui funcionalidades como cadastro de usuários, carrinho de compras, pagamentos e administração de estoque, proporcionando uma experiência completa para lojistas e clientes.
+                    O <strong>GZ Artigos Esportivos</strong> é uma plataforma de e-commerce desenvolvida com <strong>Django</strong>, permitindo a compra e gerenciamento de produtos esportivos. O sistema inclui funcionalidades como cadastro de usuários, carrinho de compras, processamento assíncrono de pagamentos e administração de estoque, proporcionando uma experiência completa para lojistas e clientes.
                 </p>
             </div>
             <div class="home-cta">
@@ -65,9 +72,9 @@
             <h2 class="heading-primary-projects">Visão Geral do Projeto</h2>
             <div class="projects-info">
                 <p class="text-primary">
-                    O <strong>GZ Artigos Esportivos</strong> é uma plataforma de e-commerce desenvolvida com <strong>Django</strong>, focada na venda e gestão de produtos esportivos. 
-                    O sistema permite que lojistas cadastrem produtos, gerenciem pedidos, acompanhem estoques em tempo real e integrem meios de pagamento online de forma intuitiva.
-                </p>             
+                    O <strong>GZ Artigos Esportivos</strong> é uma plataforma de e-commerce desenvolvida com <strong>Django</strong>, focada na venda e gestão de produtos esportivos.
+                    O sistema segue uma <strong>arquitetura distribuída</strong>, onde os pedidos e pagamentos são processados de forma assíncrona utilizando <strong>RabbitMQ</strong>. Isso garante um fluxo eficiente, sem travamentos, permitindo escalabilidade conforme a demanda.
+                </p>
             </div>
             <div class="carousel-container">
                 <div class="carousel">
@@ -89,13 +96,16 @@
                     <h3 class="about-title">Visão Geral do Projeto</h3>
                     <div class="about-text">
                         <p>
-                            O <strong>GZ Artigos Esportivos</strong> é uma plataforma de e-commerce desenvolvida com <strong>Django</strong>, permitindo a compra e gerenciamento de produtos esportivos. O sistema oferece uma experiência completa para lojistas e clientes, proporcionando um ambiente intuitivo e seguro para transações online.
+                            O <strong>GZ Artigos Esportivos</strong> é uma plataforma de e-commerce desenvolvida com <strong>Django</strong>, utilizando um sistema de <strong>mensageria baseado no RabbitMQ</strong> para processar pedidos e pagamentos de forma eficiente.
                         </p>
                         <p>
-                            A plataforma conta com funcionalidades como <strong>cadastro e autenticação de usuários</strong>, <strong>carrinho de compras</strong>, <strong>integração com meios de pagamento</strong> e <strong>gestão de estoque</strong>. Além disso, possui um painel administrativo que permite o acompanhamento das vendas, controle de produtos e análise de desempenho do negócio.
+                            O fluxo do sistema se baseia na comunicação entre dois serviços independentes: um responsável por <strong>gerenciar pedidos</strong> e outro por <strong>processar pagamentos</strong>. A interação entre esses serviços ocorre via <strong>RabbitMQ</strong>, garantindo escalabilidade e processamento otimizado das transações.
                         </p>
                         <p>
-                            O projeto foi desenvolvido com foco em performance e segurança, utilizando <strong>Docker</strong> para containerização, <strong>REST APIs</strong> para comunicação eficiente e <strong>SQL</strong> para gerenciamento de dados. A arquitetura escalável permite que o sistema seja facilmente adaptado a diferentes nichos de mercado.
+                            A plataforma conta com funcionalidades como <strong>cadastro e autenticação de usuários</strong>, <strong>carrinho de compras</strong>, <strong>pagamentos processados de forma assíncrona</strong> e <strong>gerenciamento de estoque</strong>. Além disso, um painel administrativo permite o acompanhamento das vendas e a análise de desempenho do negócio.
+                        </p>
+                        <p>
+                            O projeto foi desenvolvido com foco em <strong>arquitetura distribuída</strong>, garantindo maior robustez e desempenho. Para isso, são utilizadas tecnologias como <strong>Docker</strong> para containerização, <strong>REST APIs</strong> para comunicação eficiente, <strong>RabbitMQ</strong> para troca de mensagens entre os serviços e <strong>Flask</strong> como framework auxiliar para endpoints internos.
                         </p>
                     </div>
                     <a href="https://github.com/zadigando/GZArtigosEsportivos" class="btn btn--bg">Link do Projeto</a>
@@ -111,14 +121,16 @@
                         <div class="skills-item">REST APIs</div>
                         <div class="skills-item">Web Design</div>
                         <div class="skills-item">Django</div>
+                        <div class="skills-item">Flask</div>
                         <div class="skills-item">Docker</div>
+                        <div class="skills-item">RabbitMQ</div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    
-    
+
+
     <footer class="footer">
         <div class="footer-container">
             <div class="footer-upper">
@@ -145,7 +157,7 @@
                     </p>
                 </div>
             </div>
-    
+
             <div class="footer-lower">
                 © Copyright
                 <script>document.write(new Date().getFullYear());</script>.
@@ -153,6 +165,7 @@
             </div>
         </div>
     </footer>
-<script src="/js/script.js"></script>
+    <script src="/js/script.js"></script>
 </body>
+
 </html>
