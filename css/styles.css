@@ -824,6 +824,11 @@ body {
   .heading-primary-about::after {
     display: none;
   }
+  #btn-home {
+    padding: 10px 40px;
+    border-radius: 5px;
+    font-size: 20px;
+  }
 }
 
 @media screen and (max-width: 900px) {
@@ -898,9 +903,19 @@ body {
 }
 
 @media screen and (max-width: 801px) {
+  .heading-primary {
+    font-size: 3rem;
+  }
   .header {
     position: relative;
     z-index: 1000;
+  }
+  #text-primary-index {
+    font-size: 1.4rem;
+  }
+
+  .home-content {
+    width: 100%;
   }
 
   .header-main {
@@ -1003,6 +1018,22 @@ body {
 }
 
 @media screen and (max-width: 553px) {
+  .skills {
+    justify-content: center; /* Centraliza os itens se sobrar espaço */
+    gap: 8px; /* Diminui o espaço entre os itens */
+  }
+
+  .skills-item {
+    font-size: 14px; /* Diminui o tamanho do texto */
+    padding: 6px 10px; /* Reduz o padding interno */
+    flex: 0 1 auto; /* Permite que os itens tenham largura automática */
+    white-space: nowrap; /* Impede que o texto quebre para a linha de baixo */
+  }
+
+  .skills-item i {
+    font-size: 18px; /* Reduz o tamanho do ícone */
+  }
+
   .home {
     padding-top: 80px;
   }
