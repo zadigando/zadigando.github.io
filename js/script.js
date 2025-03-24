@@ -15,7 +15,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// 🔹 Verifica se a página possui um carrossel antes de executar o código
 const carousel = document.querySelector(".carousel");
 const slides = document.querySelectorAll(".carousel-image");
 const prevBtn = document.querySelector(".prev");
@@ -26,7 +25,7 @@ if (carousel && slides.length > 0) {
   let autoSlideInterval;
 
   function showSlide(index) {
-    if (!carousel) return; // 🔹 Evita erro se o carrossel não existir
+    if (!carousel) return;
 
     carousel.style.transition = "transform 0.5s ease-in-out";
     carousel.style.transform = `translateX(${-index * 100}%)`;
@@ -98,7 +97,7 @@ function startCounter() {
   stats.forEach((stat) => {
     let target = +stat.getAttribute("data-target");
     let count = 0;
-    let increment = target / 100; // Ajuste para um incremento suave
+    let increment = target / 100;
 
     let updateCounter = setInterval(() => {
       count += increment;
@@ -108,11 +107,10 @@ function startCounter() {
         stat.innerText = target;
         clearInterval(updateCounter);
       }
-    }, 30); // Tempo entre cada incremento
+    }, 30);
   });
 }
 
-// Dispara a animação quando a seção "Sobre Mim" estiver visível
 document.addEventListener("DOMContentLoaded", function () {
   const aboutSection = document.querySelector(".about");
 
@@ -120,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const rect = aboutSection.getBoundingClientRect();
     if (rect.top < window.innerHeight * 0.75) {
       startCounter();
-      window.removeEventListener("scroll", checkVisibility); // Evita reativar o contador
+      window.removeEventListener("scroll", checkVisibility);
     }
   }
 
