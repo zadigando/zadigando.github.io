@@ -1,168 +1,96 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zadig de Bem</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/android-chrome-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/assets/images/android-chrome-512x512.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarbonoZero — Zadig de Bem</title>
+  <meta name="description" content="CarbonoZero — Plataforma de monitoramento de emissões de carbono. Projeto de Zadig de Bem, Desenvolvedor Full Stack.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 
 <body>
 
-    <header class="header">
-        <div class="header-content">
-            <div class="header-logo-container">
-                <div class="header-logo-image-container">
-                    <img src="https://i.postimg.cc/Gp6HryQ2/1726503580029.jpg" alt="Foto Zadig de Bem" class="header-logo-image">
-                </div>
-                <span class="header-logo-text">Zadig de Bem</span>
-            </div>
+  <nav>
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Zadig de Bem</a>
+      <div class="nav-center" id="nav-center">
+        <a href="/#work" data-i18n="nav.work">Projetos</a>
+        <a href="/#about" data-i18n="nav.about">Sobre</a>
+        <a href="/#contact" data-i18n="nav.contact">Contato</a>
+      </div>
+      <div class="nav-right">
+        <button class="lang-btn active" data-lang="pt" onclick="applyLang('pt')">PT</button>
+        <span class="lang-sep">|</span>
+        <button class="lang-btn" data-lang="en" onclick="applyLang('en')">EN</button>
+        <button class="menu-btn" id="menu-btn" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
 
-            <button class="menu-toggle" id="menu-toggle" aria-label="Abrir Menu">
-                <i class="fa-solid fa-bars"></i>
-            </button>
+  <main class="detail-main">
+    <div class="container">
+
+      <a href="/" class="back-link" data-i18n="detail.back">← Portfólio</a>
+
+      <div class="detail-header">
+        <h1 class="detail-title">CarbonoZero</h1>
+        <div class="detail-meta">
+          <span data-i18n="detail.carbonozero.type">Sustentabilidade</span>
         </div>
+      </div>
 
-        <nav class="header-main" id="menu">
-            <ul class="header-links">
-                <li class="header-links-wrapper"><a href="/index.html">Home</a></li>
-                <li class="header-links-wrapper"><a href="#about">Sobre</a></li>
-                <li class="header-links-wrapper"><a href="#projects">Projetos</a></li>
-                <li class="header-links-wrapper"><a href="#contact">Contato</a></li>
-            </ul>
-        </nav>
-    </header>
+      <img src="/assets/images/login-carbonozero.jpg" alt="CarbonoZero" class="detail-hero-img">
 
-
-    <section class="home">
-        <div class="home-content">
-            <h1 class="heading-primary">CarbonoZero</h1>
-            <div class="home-info">
-                <p class="text-primary">
-                    O CarbonoZero é uma plataforma desenvolvida com <strong>Angular</strong> e <strong>C#</strong> para ajudar empresas a monitorar e reduzir suas emissões de carbono. O sistema acompanha as iniciativas sustentáveis e recompensa as empresas com <strong>créditos de carbono</strong>, incentivando práticas ecológicas e responsabilidade ambiental.
-                </p>
-            </div>
-            <div class="home-cta">
-                <a href="https://github.com/zadigando/CarbonoZero" class="btn btn--bg">Link do Projeto</a>
-            </div>
+      <div class="detail-body">
+        <div class="detail-desc">
+          <h2 data-i18n="detail.overview">Visão Geral</h2>
+          <p data-i18n="detail.carbonozero.p1">O CarbonoZero é uma plataforma desenvolvida para ajudar empresas a monitorar e reduzir suas emissões de carbono, incentivando práticas ecológicas através de um sistema de créditos.</p>
+          <p data-i18n="detail.carbonozero.p2">A aplicação foi construída com <strong>Angular</strong> no frontend e <strong>C# / .NET</strong> no backend, com uma <strong>API REST</strong> robusta para comunicação entre as camadas e banco de dados <strong>SQL</strong>.</p>
+          <p data-i18n="detail.carbonozero.p3">O sistema acompanha as iniciativas sustentáveis das empresas e as recompensa com créditos de carbono, criando um incentivo econômico para a responsabilidade ambiental.</p>
         </div>
-        <div class="home-socials">
-            <a href="https://github.com/zadigando" target="_blank" class="home-social-icon-link">
-                <i class="fa-brands fa-github"></i>
-            </a>
-            <a href="https://www.linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank" class="home-social-icon-link">
-                <i class="fa-brands fa-linkedin"></i>
-            </a>
-            <a target="_blank" rel="noreferrer" href="https://wa.me/16991079105" class="home-social-icon-link">
-                <i class="fa-brands fa-whatsapp"></i>
-            </a>
-        </div>
-    </section>
+        <aside class="detail-aside">
+          <p class="detail-aside-label" data-i18n="detail.stack">Stack</p>
+          <div class="detail-tags">
+            <span class="tag">Angular</span>
+            <span class="tag">TypeScript</span>
+            <span class="tag">C#</span>
+            <span class="tag">.NET</span>
+            <span class="tag">SQL</span>
+            <span class="tag">REST APIs</span>
+            <span class="tag">Git</span>
+          </div>
+          <a href="https://github.com/zadigando" target="_blank" rel="noreferrer" class="btn btn-primary">GitHub ↗</a>
+        </aside>
+      </div>
 
-    <section id="projects" class="projects">
-        <div class="projects-content">
-            <h2 class="heading-primary-projects">Visão Geral do Projeto</h2>
-            <div class="projects-info">
-                <p class="text-primary">
-                    O CarbonoZero é uma plataforma desenvolvida com <strong>Angular</strong> e <strong>C#</strong> para ajudar empresas a monitorar e reduzir suas emissões de carbono. O sistema acompanha as iniciativas sustentáveis e recompensa as empresas com <strong>créditos de carbono</strong>, incentivando práticas ecológicas e responsabilidade ambiental. </p>
-            </div>
-            <div class="carousel-container">
-                <div class="carousel">
-                    <img src="/assets/images/gzartigosesportivos.jpg" alt="Imagem 1" class="carousel-image">
-                    <img src="/assets/images/gzartigosesportivos.jpg" alt="Imagem 2" class="carousel-image">
-                    <img src="/assets/images/gzartigosesportivos.jpg" alt="Imagem 3" class="carousel-image">
-                    <img src="/assets/images/gzartigosesportivos.jpg" alt="Imagem 1" class="carousel-image">
-                </div>
-                <button class="carousel-btn prev" onclick="prevSlide()">&#10094;</button>
-                <button class="carousel-btn next" onclick="nextSlide()">&#10095;</button>
-            </div>
-        </div>
-    </section>
+    </div>
+  </main>
 
-    <section id="about" class="about">
-        <div class="about-content">
-            <div class="about-main">
-                <div class="about-description">
-                    <h3 class="about-title">Visão Geral do Projeto</h3>
-                    <div class="about-text">
-                        <p>
-                            O <strong>CarbonoZero</strong> é uma plataforma inovadora que permite empresas monitorar e reduzir suas emissões de carbono. Desenvolvida com <strong>Angular</strong> e <strong>C#</strong>, a solução oferece um sistema inteligente de acompanhamento, que auxilia organizações na criação de estratégias mais sustentáveis e eficazes para compensação de CO₂.
-                        </p>
-                        <p>
-                            A plataforma disponibiliza <strong>relatórios detalhados</strong>, integração com bancos de dados para análise em tempo real e dashboards interativos, permitindo que empresas acompanhem seu progresso na redução de emissões. Além disso, o sistema reconhece e recompensa iniciativas sustentáveis por meio da geração de <strong>créditos de carbono</strong>, incentivando práticas ecológicas no setor corporativo.
-                        </p>
-                        <p>
-                            O CarbonoZero foi desenvolvido com o objetivo de tornar a neutralização de carbono acessível e eficiente, possibilitando que empresas adotem políticas ambientais mais responsáveis e transparentes. O sistema é altamente escalável e adaptável às necessidades de diferentes setores da economia.
-                        </p>
-                    </div>
-                    <a href="https://github.com/zadigando/CarbonoZero" class="btn btn--bg">Link do Projeto</a>
-                    <a href="/" class="btn btn--bg btn--inv">Voltar</a>
-                </div>
-                <div class="about-skills">
-                    <h3 class="about-title">Tecnologias utilizadas</h3>
-                    <div class="skills">
-                        <div class="skills-item">HTML</div>
-                        <div class="skills-item">CSS</div>
-                        <div class="skills-item">JavaScript</div>
-                        <div class="skills-item">TypeScript</div>
-                        <div class="skills-item">Angular</div>
-                        <div class="skills-item">C#</div>
-                        <div class="skills-item">.NET</div>
-                        <div class="skills-item">SQL</div>
-                        <div class="skills-item">Git</div>
-                        <div class="skills-item">REST APIs</div>
-                        <div class="skills-item">Web Design</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+  <footer>
+    <div class="container footer-inner">
+      <span class="footer-copy">
+        <span data-i18n="footer.copy">Feito por Zadig de Bem</span>
+        &copy; <script>document.write(new Date().getFullYear())</script>
+      </span>
+      <div class="footer-links">
+        <a href="https://github.com/zadigando" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank" rel="noreferrer">LinkedIn</a>
+        <a href="https://wa.me/16991079105" target="_blank" rel="noreferrer">WhatsApp</a>
+      </div>
+    </div>
+  </footer>
 
+  <script src="/js/script.js"></script>
 
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-upper">
-                <div class="footer-row footer-row-1">
-                    <h2 class="heading-sm footer-heading-sm">
-                        <span>Social</span>
-                    </h2>
-                    <div class="footer-socials">
-                        <a target="_blank" rel="noreferrer" href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" class="footer-social-link">
-                            <i class="fa-brands fa-linkedin"></i>
-                        </a>
-                        <a target="_blank" rel="noreferrer" href="https://github.com/zadigando" class="footer-social-link">
-                            <i class="fa-brands fa-github"></i>
-                        </a>
-                        <a target="_blank" rel="noreferrer" href="https://wa.me/16991079105" class="footer-social-link">
-                            <i class="fa-brands fa-whatsapp"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="footer-row footer-row-2">
-                    <h2 class="heading-sm">Zadig de Bem</h2>
-                    <p class="footer-description">
-                        Desenvolvedor Full Stack apaixonado por tecnologia e inovação, criando soluções digitais impactantes.
-                    </p>
-                </div>
-            </div>
-
-            <div class="footer-lower">
-                © Copyright
-                <script>document.write(new Date().getFullYear());</script>.
-                Feito por <a rel="noreferrer" target="_blank" href="#">Zadig de Bem</a>
-            </div>
-        </div>
-    </footer>
-    <script src="/js/script.js"></script>
 </body>
-
 </html>

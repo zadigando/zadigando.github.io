@@ -1,338 +1,261 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zadig de Bem</title>
-    <link rel="preload" href="/css/styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/images/android-chrome-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/assets/images/android-chrome-512x512.png">
-    <meta name="description" content="Portfólio de Zadig de Bem - Desenvolvedor Full Stack especializado em Django, Angular, C#, APIs REST e Docker.">
-    <meta property="og:title" content="Zadig de Bem - Desenvolvedor Full Stack">
-    <meta property="og:description" content="Veja meus projetos de desenvolvimento web e software. Tecnologias como Django, Angular, Docker, APIs REST e mais.">
-    <meta property="og:url" content="https://zadigando.github.io/">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Zadig de Bem - Desenvolvedor Full Stack">
-    <meta name="twitter:description" content="Portfólio com projetos de desenvolvimento web e software.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap" rel="stylesheet">
-    <meta name="mobile-web-app-capable" content="yes">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zadig de Bem — Full Stack Developer</title>
+  <meta name="description" content="Portfólio de Zadig de Bem — Desenvolvedor Full Stack especializado em Django, Angular, C#, TypeScript, Docker e APIs REST.">
+  <meta property="og:title" content="Zadig de Bem — Full Stack Developer">
+  <meta property="og:description" content="Projetos de desenvolvimento web e software. Django, Angular, C#, TypeScript, Docker e mais.">
+  <meta property="og:url" content="https://zadigando.github.io/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/images/apple-touch-icon.png">
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 
 <body>
 
-    <header class="header">
-        <div class="header-content">
-            <div class="header-logo-container">
-                <div class="header-logo-image-container">
-                    <img src="https://i.postimg.cc/Gp6HryQ2/1726503580029.jpg" alt="Foto Zadig de Bem" class="header-logo-image">
-                </div>
-                <span class="header-logo-text">Zadig de Bem</span>
-            </div>
+  <nav>
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Zadig de Bem</a>
 
-            <button class="menu-toggle" id="menu-toggle" aria-label="Abrir Menu">
-                <i class="fa-solid fa-bars"></i>
-            </button>
+      <div class="nav-center" id="nav-center">
+        <a href="#work" data-i18n="nav.work">Projetos</a>
+        <a href="#about" data-i18n="nav.about">Sobre</a>
+        <a href="#contact" data-i18n="nav.contact">Contato</a>
+      </div>
+
+      <div class="nav-right">
+        <button class="lang-btn active" data-lang="pt" onclick="applyLang('pt')">PT</button>
+        <span class="lang-sep">|</span>
+        <button class="lang-btn" data-lang="en" onclick="applyLang('en')">EN</button>
+        <button class="menu-btn" id="menu-btn" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero-name">Zadig de Bem</h1>
+      <p class="hero-role" data-i18n="hero.role">Desenvolvedor Full Stack</p>
+      <div class="hero-divider"></div>
+      <div class="hero-tags">
+        <span class="hero-tag">Django</span>
+        <span class="hero-tag">Angular</span>
+        <span class="hero-tag">C#</span>
+        <span class="hero-tag">TypeScript</span>
+        <span class="hero-tag">Docker</span>
+        <span class="hero-tag">REST APIs</span>
+      </div>
+      <div class="hero-actions">
+        <a href="#work" class="btn btn-primary" data-i18n="hero.cta.primary">Ver Projetos</a>
+        <a href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank" rel="noreferrer" class="btn btn-outline" data-i18n="hero.cta.linkedin">LinkedIn</a>
+        <a href="https://github.com/zadigando" target="_blank" rel="noreferrer" class="btn btn-outline" data-i18n="hero.cta.github">GitHub</a>
+      </div>
+    </div>
+  </section>
+
+
+  <section id="work" class="work">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-label" data-i18n="work.label">Trabalho</p>
+        <h2 class="section-title" data-i18n="work.title">Projetos</h2>
+      </div>
+
+      <div class="projects-grid">
+
+        <div class="project-card reveal">
+          <img src="/assets/images/weloo.jpg" alt="Weloo" class="project-img" onerror="this.style.display='none'">
+          <div class="project-body">
+            <h3 class="project-title">Weloo</h3>
+            <p class="project-desc" data-i18n="proj.weloo.desc">Plataforma de e-commerce desenvolvida com foco em performance e experiência do usuário.</p>
+            <div class="project-tags">
+              <span class="tag">JavaScript</span>
+              <span class="tag">E-commerce</span>
+              <span class="tag">Web Design</span>
+            </div>
+            <div class="project-links">
+              <a href="https://weloo.com.br" target="_blank" rel="noreferrer" class="project-link" data-i18n="proj.weloo.live">Ver Site ↗</a>
+              <a href="/projects/weloo.html" class="project-link project-link--muted" data-i18n="proj.weloo.details">Detalhes →</a>
+            </div>
+          </div>
         </div>
 
-        <nav class="header-main" id="menu">
-            <ul class="header-links">
-                <li class="header-links-wrapper"><a href="#home">Home</a></li>
-                <li class="header-links-wrapper"><a href="#about">Sobre</a></li>
-                <li class="header-links-wrapper"><a href="#projects">Projetos</a></li>
-                <li class="header-links-wrapper"><a href="#contact">Contato</a></li>
-            </ul>
-        </nav>
-    </header>
-
-
-    <section class="home">
-        <div class="home-content">
-            <h1 class="heading-primary">Olá! Eu sou Zadig de Bem</h1>
-            <div class="home-info">
-                <p class="text-primary" id="text-primary-index">
-                    Desenvolvedor Full Stack apaixonado por tecnologia, inovação e criação de experiências digitais impactantes.
-                </p>
+        <div class="project-card reveal">
+          <img src="/assets/images/mcci-gifts.jpg" alt="MCCI Gifts" class="project-img" onerror="this.style.display='none'">
+          <div class="project-body">
+            <h3 class="project-title">MCCI Gifts</h3>
+            <p class="project-desc" data-i18n="proj.mcci.desc">Loja de presentes personalizados com arquitetura serverless no Cloudflare Workers.</p>
+            <div class="project-tags">
+              <span class="tag">TypeScript</span>
+              <span class="tag">Cloudflare Workers</span>
+              <span class="tag">Serverless</span>
             </div>
-            <div class="home-cta" id="btn-home">
-                <a href="#projects" class="btn btn--bg" id="btn-home">Meus Projetos</a>
+            <div class="project-links">
+              <a href="https://www.mcci-gifts.workers.dev/" target="_blank" rel="noreferrer" class="project-link" data-i18n="proj.mcci.live">Ver Site ↗</a>
+              <a href="/projects/mcci-gifts.html" class="project-link project-link--muted" data-i18n="proj.mcci.details">Detalhes →</a>
             </div>
+          </div>
         </div>
-        <div class="home-hero__mouse-scroll-cont">
-            <div class="mouse"></div>
+
+        <div class="project-card reveal">
+          <img src="/assets/images/login-carbonozero.jpg" alt="CarbonoZero" class="project-img">
+          <div class="project-body">
+            <h3 class="project-title">CarbonoZero</h3>
+            <p class="project-desc" data-i18n="proj.carbonozero.desc">Plataforma para empresas monitorarem e reduzirem emissões de carbono, com sistema de créditos.</p>
+            <div class="project-tags">
+              <span class="tag">Angular</span>
+              <span class="tag">C#</span>
+              <span class="tag">.NET</span>
+              <span class="tag">SQL</span>
+            </div>
+            <div class="project-links">
+              <a href="/projects/carbonozero.html" class="project-link" data-i18n="proj.carbonozero.details">Detalhes →</a>
+            </div>
+          </div>
         </div>
-        <div class="home-socials">
-            <a href="https://github.com/zadigando" target="_blank" class="home-social-icon-link">
-                <i class="fa-brands fa-github"></i>
-            </a>
-            <a href="https://www.linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank" class="home-social-icon-link">
-                <i class="fa-brands fa-linkedin"></i>
-            </a>
-            <a target="_blank" rel="noreferrer" href="https://wa.me/16991079105" class="home-social-icon-link">
-                <i class="fa-brands fa-whatsapp"></i>
-            </a>
+
+        <div class="project-card reveal">
+          <img src="/assets/images/gzartigosesportivos.jpg" alt="GZ Artigos Esportivos" class="project-img">
+          <div class="project-body">
+            <h3 class="project-title">GZ Artigos Esportivos</h3>
+            <p class="project-desc" data-i18n="proj.gz.desc">E-commerce completo para artigos esportivos com carrinho, pagamentos e gestão de estoque.</p>
+            <div class="project-tags">
+              <span class="tag">Django</span>
+              <span class="tag">Flask</span>
+              <span class="tag">Docker</span>
+              <span class="tag">RabbitMQ</span>
+            </div>
+            <div class="project-links">
+              <a href="/projects/gzartigosesportivos.html" class="project-link" data-i18n="proj.gz.details">Detalhes →</a>
+            </div>
+          </div>
         </div>
-    </section>
 
-    <section id="about" class="about">
-        <div class="about-content">
-            <h2 class="heading-primary-about">Sobre Mim</h2>
-            <div class="about-info">
-                <p class="text-primary">
-                    Aqui você encontrará mais informações sobre o que faço e minhas habilidades no desenvolvimento Full Stack e tecnologia.
-                </p>
-            </div>
-            <div class="about-main">
-                <div class="about-description">
-                    <div class="about-image">
-                        <img src="/assets/images/android-chrome-192x192.png" alt="Zadig de Bem - Desenvolvedor Full Stack">
-                    </div>
-                    <h3 class="about-title">Conheça mais sobre mim!</h3>
-                    <div class="about-text">
-                        <p>
-                            Sou um <strong>Desenvolvedor Full Stack</strong> apaixonado por tecnologia e inovação, criando aplicações web modernas que impactam positivamente os usuários. Confira alguns dos meus projetos na seção <strong>Projetos</strong>.
-                        </p>
-                        <p>
-                            Gosto de compartilhar conhecimento sobre <strong>desenvolvimento web</strong> e tecnologia, contribuindo com a comunidade de devs. Sinta-se à vontade para me seguir no
-                            <a rel="noreferrer" href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank">LinkedIn</a>
-                            e no
-                            <a rel="noreferrer" href="https://github.com/zadigando" target="_blank">GitHub</a>
-                            para acompanhar meu trabalho e interagir comigo.
-                        </p>
-                        <p>
-                            Estou aberto a <strong>oportunidades de trabalho</strong> onde eu possa contribuir, aprender e crescer. Se você tem uma oportunidade que se encaixa no meu perfil, não hesite em <strong>entrar em contato</strong>.
-                        </p>
-                    </div>
-                    <a href="./#contact" class="btn btn--bg">Contato</a>
-                </div>
-
-
-                <div class="about-right">
-                    <div class="about-stats">
-                        <div class="stat">
-                            <h3 class="stat-number" data-target="15">0</h3>
-                            <p>Projetos Concluídos</p>
-                        </div>
-                        <div class="stat">
-                            <h3 class="stat-number" data-target="3">0</h3>
-                            <p>Anos de Experiência</p>
-                        </div>
-                        <div class="stat">
-                            <h3 class="stat-number" data-target="12">0</h3>
-                            <p>Tecnologias Dominadas</p>
-                        </div>
-                    </div>
-
-                    <div class="about-skills">
-                        <h3 class="about-title">Minhas Habilidades</h3>
-                        <div class="skills">
-                            <div class="skills-item"><i class="fa-brands fa-html5"></i> HTML</div>
-                            <div class="skills-item"><i class="fa-brands fa-css3-alt"></i> CSS</div>
-                            <div class="skills-item"><i class="fa-brands fa-js"></i> JavaScript</div>
-                            <div class="skills-item"><i class="fa-solid fa-code"></i> TypeScript</div>
-                            <div class="skills-item"><i class="fa-brands fa-react"></i> React</div>
-                            <div class="skills-item"><i class="fa-brands fa-angular"></i> Angular</div>
-                            <div class="skills-item"><i class="fa-brands fa-python"></i> Python</div>
-                            <div class="skills-item"><i class="fa-solid fa-database"></i> Django</div>
-                            <div class="skills-item"><i class="fa-solid fa-flask"></i> Flask</div>
-                            <div class="skills-item"><i class="fa-brands fa-java"></i> Java</div>
-                            <div class="skills-item"><i class="fa-solid fa-code"></i> C#</div>
-                            <div class="skills-item"><i class="fa-brands fa-microsoft"></i> .NET</div>
-                            <div class="skills-item"><i class="fa-solid fa-database"></i> SQL</div>
-                            <div class="skills-item"><i class="fa-solid fa-database"></i> MySQL</div>
-                            <div class="skills-item"><i class="fa-solid fa-database"></i> MongoDB</div>
-                            <div class="skills-item"><i class="fa-brands fa-git-alt"></i> Git</div>
-                            <div class="skills-item"><i class="fa-brands fa-docker"></i> Docker</div>
-                            <div class="skills-item"><i class="fa-solid fa-network-wired"></i> REST APIs</div>
-                            <div class="skills-item"><i class="fa-solid fa-palette"></i> Web Design</div>
-                            <div class="skills-item"><i class="fa-solid fa-bug"></i> QA Testing</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="about-timeline">
-                <h3 class="about-title">Minha Jornada</h3>
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-icon"><i class="fa-solid fa-graduation-cap"></i></div>
-                        <div class="timeline-content">
-                            <h4><strong>Centro Universitário Barão de Mauá</strong></h4>
-                            <p>Bacharelado em Ciência da Computação <strong>Período:</strong> 2021 - 2024</p>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-icon"><i class="fa-solid fa-briefcase"></i></div>
-                        <div class="timeline-content">
-                            <h4><strong>Suporte Técnico - USP</strong></h4>
-                            <p>Forneci suporte técnico, resolvi problemas de hardware/software e documentei processos técnicos.</p>
-                            <p><strong>Período:</strong> 2022 - 2023</p>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-icon"><i class="fa-solid fa-code"></i></div>
-                        <div class="timeline-content">
-                            <h4><strong>Desenvolvedor Full Stack Jr</strong></h4>
-                            <p>Corrigi bugs, implementei novas funcionalidades e melhorei a performance de aplicações web.</p>
-                            <p><strong>Período:</strong> 2021 - 2022</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="project-card project-card--github reveal" style="grid-column: 1 / -1;">
+          <h3 class="project-title" data-i18n="proj.github.title">Ver Mais</h3>
+          <p class="project-desc" data-i18n="proj.github.desc">CRUDs com Docker, APIs REST e projetos em C#, Java e Python.</p>
+          <a href="https://github.com/zadigando" target="_blank" rel="noreferrer" class="project-link" data-i18n="proj.github.cta">Acessar GitHub →</a>
         </div>
-    </section>
+
+      </div>
+    </div>
+  </section>
 
 
-    <section id="projects" class="projects">
-        <div class="projects-content">
-            <h2 class="heading-primary-projects">Meus Projetos</h2>
-            <div class="projects-info">
-                <p class="text-primary">
-                    Aqui você encontra alguns dos meus projetos pessoais e de clientes.
-                </p>
-            </div>
-            <div class="projects-list">
-                <div class="project-item">
-                    <div class="project-image-container">
-                        <img src="/assets/images/login-carbonozero.jpg" alt="Projeto 1" class="project-image">
-                    </div>
-                    <div class="project-description">
-                        <h3 class="project-title">CarbonoZero</h3>
-                        <p class="project-text">
-                            O CarbonoZero é uma plataforma desenvolvida com <strong>Angular</strong> e <strong>C#</strong> para ajudar empresas a monitorar e reduzir suas emissões de carbono. O sistema acompanha as iniciativas sustentáveis e recompensa as empresas com <strong>créditos de carbono</strong>, incentivando práticas ecológicas e responsabilidade ambiental.
-                        </p>
-                        <a href="/projects/carbonozero.html" class="btn btn--bg">Saiba Mais</a>
-                    </div>
-                </div>
-                <div class="project-item">
-                    <div class="project-image-container">
-                        <img src="/assets/images/gzartigosesportivos.jpg" alt="Projeto 2" class="project-image">
-                    </div>
-                    <div class="project-description">
-                        <h3 class="project-title">GZ Artigos Esportivos</h3>
-                        <p class="project-text">
-                            O <strong>GZ Artigos Esportivos</strong> é uma plataforma de e-commerce desenvolvida com <strong>Django</strong>, permitindo a compra e gerenciamento de produtos esportivos. O sistema inclui funcionalidades como cadastro de usuários, carrinho de compras, pagamentos e administração de estoque, proporcionando uma experiência completa para lojistas e clientes.
-                        </p>
-                        <a href="/projects/gzartigosesportivos.html" class="btn btn--bg">Saiba Mais</a>
-                    </div>
-                </div>
-                <div class="project-item github-highlight">
-                    <div class="project-image-container">
-                        <img src="/assets/images/github-projects.jpg" alt="Mais Projetos no GitHub" class="project-image">
-                    </div>
-                    <div class="project-description">
-                        <h3 class="project-title">Veja Mais Projetos</h3>
-                        <p class="project-text">
-                            Explore outros projetos desenvolvidos por mim, incluindo <strong>CRUDs com Docker</strong>, <strong>APIs REST</strong> e <strong>projetos em C#, Java e Python</strong>.
-                            Acesse meu repositório para mais informações!
-                        </p>
-                        <a href="https://github.com/zadigando" target="_blank" class="btn btn--bg">Acessar GitHub</a>
-                    </div>
-                </div>
-            </div>
+  <section id="about">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-label" data-i18n="about.label">Sobre</p>
+        <h2 class="section-title" data-i18n="about.title">Sobre Mim</h2>
+      </div>
+      <div class="about-inner">
+        <div class="about-bio reveal">
+          <p data-i18n="about.p1">Sou um <strong>Desenvolvedor Full Stack</strong> apaixonado por tecnologia e inovação, construindo aplicações web modernas que geram impacto real.</p>
+          <p data-i18n="about.p2">Gosto de compartilhar conhecimento sobre <strong>desenvolvimento web</strong> e contribuir com a comunidade. Sinta-se à vontade para me seguir no <a href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank">LinkedIn</a> e no <a href="https://github.com/zadigando" target="_blank">GitHub</a>.</p>
+          <p data-i18n="about.p3">Estou aberto a <strong>oportunidades de trabalho</strong> onde possa contribuir, aprender e crescer. Se você tem uma oportunidade que se encaixa no meu perfil, entre em <strong>contato</strong>.</p>
         </div>
-    </section>
-
-    <section id="contact" class="contact">
-        <div class="contact-container">
-            <h2 class="heading-primary-contact">Contato</h2>
-            <p class="text-primary">
-                Fique à vontade para entrar em contato preenchendo o formulário abaixo. Retornarei o mais rápido possível.
-            </p>
-            <div class="contact-form-container">
-                <form id="contact-form">
-                    <div class="contact-form-field">
-                        <label for="name">Nome</label>
-                        <input type="text" name="name" id="name" required placeholder="Digite seu nome">
-                    </div>
-
-                    <div class="contact-form-field">
-                        <label for="email">E-mail</label>
-                        <input type="email" name="email" id="email" required placeholder="Digite seu e-mail">
-                    </div>
-
-                    <div class="contact-form-field">
-                        <label for="message">Mensagem</label>
-                        <textarea name="message" id="message" rows="5" required placeholder="Digite sua mensagem"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn--bg">Enviar</button>
-                </form>
-            </div>
-
+        <div class="about-skills-section reveal">
+          <p class="about-skills-label" data-i18n="about.skills.label">Habilidades</p>
+          <div class="skills-list">
+            <span class="skill-tag">HTML</span>
+            <span class="skill-tag">CSS</span>
+            <span class="skill-tag">JavaScript</span>
+            <span class="skill-tag">TypeScript</span>
+            <span class="skill-tag">React</span>
+            <span class="skill-tag">Angular</span>
+            <span class="skill-tag">Python</span>
+            <span class="skill-tag">Django</span>
+            <span class="skill-tag">Flask</span>
+            <span class="skill-tag">Java</span>
+            <span class="skill-tag">C#</span>
+            <span class="skill-tag">.NET</span>
+            <span class="skill-tag">SQL</span>
+            <span class="skill-tag">MySQL</span>
+            <span class="skill-tag">MongoDB</span>
+            <span class="skill-tag">Git</span>
+            <span class="skill-tag">Docker</span>
+            <span class="skill-tag">REST APIs</span>
+            <span class="skill-tag">Cloudflare Workers</span>
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-upper">
-                <div class="footer-row footer-row-1">
-                    <h2 class="heading-sm footer-heading-sm">
-                        <span>Social</span>
-                    </h2>
-                    <div class="footer-socials">
-                        <a target="_blank" rel="noreferrer" href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" class="footer-social-link">
-                            <i class="fa-brands fa-linkedin"></i>
-                        </a>
-                        <a target="_blank" rel="noreferrer" href="https://github.com/zadigando" class="footer-social-link">
-                            <i class="fa-brands fa-github"></i>
-                        </a>
-                        <a target="_blank" rel="noreferrer" href="https://wa.me/16991079105" class="footer-social-link">
-                            <i class="fa-brands fa-whatsapp"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="footer-row footer-row-2">
-                    <h2 class="heading-sm">Zadig de Bem</h2>
-                    <p class="footer-description">
-                        Desenvolvedor Full Stack apaixonado por tecnologia e inovação, criando soluções digitais impactantes.
-                    </p>
-                </div>
-            </div>
 
-            <div class="footer-lower">
-                © Copyright
-                <script>document.write(new Date().getFullYear());</script>.
-                Feito por <a rel="noreferrer" target="_blank" href="#">Zadig de Bem</a>
-            </div>
+  <section id="contact" class="contact">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-label" data-i18n="contact.label">Contato</p>
+        <h2 class="section-title" data-i18n="contact.title">Fale Comigo</h2>
+      </div>
+      <div class="contact-inner">
+        <div class="contact-text reveal">
+          <p data-i18n="contact.text">Aberto a oportunidades, projetos freelance e colaborações. Preencha o formulário ou entre em contato diretamente.</p>
+          <div class="contact-alts">
+            <a href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank" rel="noreferrer" class="contact-alt-link">LinkedIn →</a>
+            <a href="https://wa.me/16991079105" target="_blank" rel="noreferrer" class="contact-alt-link">WhatsApp →</a>
+            <a href="https://github.com/zadigando" target="_blank" rel="noreferrer" class="contact-alt-link">GitHub →</a>
+          </div>
         </div>
-    </footer>
+        <div class="reveal">
+          <form id="contact-form">
+            <div class="form-field">
+              <label data-i18n="contact.form.name">Nome</label>
+              <input type="text" id="name" name="name" required
+                data-i18n-placeholder="contact.form.name" placeholder="Nome">
+            </div>
+            <div class="form-field">
+              <label data-i18n="contact.form.email">E-mail</label>
+              <input type="email" id="email" name="email" required
+                data-i18n-placeholder="contact.form.email" placeholder="E-mail">
+            </div>
+            <div class="form-field">
+              <label data-i18n="contact.form.message">Mensagem</label>
+              <textarea id="message" name="message" rows="5" required
+                data-i18n-placeholder="contact.form.message" placeholder="Mensagem"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" data-i18n="contact.form.submit">Enviar Mensagem</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
 
 
+  <footer>
+    <div class="container footer-inner">
+      <span class="footer-copy">
+        <span data-i18n="footer.copy">Feito por Zadig de Bem</span>
+        &copy; <script>document.write(new Date().getFullYear())</script>
+      </span>
+      <div class="footer-links">
+        <a href="https://github.com/zadigando" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://linkedin.com/in/zadig-de-bem-b21a581b3/" target="_blank" rel="noreferrer">LinkedIn</a>
+        <a href="https://wa.me/16991079105" target="_blank" rel="noreferrer">WhatsApp</a>
+      </div>
+    </div>
+  </footer>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="/js/script.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script>
-        (function () {
-            emailjs.init("q2BeVEzrxs2cwcJxC");
-        })();
 
-        document.getElementById("contact-form").addEventListener("submit", function (e) {
-            e.preventDefault();
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>(function () { emailjs.init('q2BeVEzrxs2cwcJxC'); })();</script>
+  <script src="/js/script.js"></script>
 
-            emailjs.send("service_oky71nr", "template_hkb77uu", {
-                name: document.getElementById("name").value,
-                email: document.getElementById("email").value,
-                message: document.getElementById("message").value
-            }).then(function (response) {
-                alert("Mensagem enviada com sucesso!");
-                document.getElementById("contact-form").reset();
-            }, function (error) {
-                alert("Erro ao enviar mensagem. Tente novamente.");
-                console.error("Erro:", error);
-            });
-        });
-
-    </script>
 </body>
-
 </html>
