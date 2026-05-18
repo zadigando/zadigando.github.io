@@ -6,6 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Weloo — Zadig de Bem</title>
   <meta name="description" content="Weloo — Plataforma de e-commerce. Projeto de Zadig de Bem, Desenvolvedor Full Stack.">
+  <meta property="og:title" content="Weloo — Zadig de Bem">
+  <meta property="og:description" content="Plataforma de e-commerce desenvolvida com foco em performance e experiência do usuário.">
+  <meta property="og:url" content="https://zadigando.github.io/projects/weloo.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://i.postimg.cc/Gp6HryQ2/1726503580029.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://i.postimg.cc/Gp6HryQ2/1726503580029.jpg">
+  <link rel="manifest" href="/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -28,7 +36,7 @@
         <button class="lang-btn active" data-lang="pt" onclick="applyLang('pt')">PT</button>
         <span class="lang-sep">|</span>
         <button class="lang-btn" data-lang="en" onclick="applyLang('en')">EN</button>
-        <button class="menu-btn" id="menu-btn" aria-label="Menu">
+        <button class="menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false">
           <span></span>
           <span></span>
           <span></span>
@@ -51,7 +59,7 @@
         </div>
       </div>
 
-      <img src="/assets/images/weloo.jpg" alt="Weloo" class="detail-hero-img" onerror="this.style.display='none'">
+      <img src="/assets/images/weloo.svg" alt="Weloo" class="detail-hero-img">
 
       <div class="detail-body">
         <div class="detail-desc">
@@ -79,7 +87,7 @@
     <div class="container footer-inner">
       <span class="footer-copy">
         <span data-i18n="footer.copy">Feito por Zadig de Bem</span>
-        &copy; <script>document.write(new Date().getFullYear())</script>
+        &copy; <span id="year"></span>
       </span>
       <div class="footer-links">
         <a href="https://github.com/zadigando" target="_blank" rel="noreferrer">GitHub</a>

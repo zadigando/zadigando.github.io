@@ -50,6 +50,17 @@ button {
   font-family: inherit;
 }
 
+/* ===== FOCUS ===== */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* ===== TYPOGRAPHY ===== */
 h1, h2, h3, h4 {
   font-weight: 700;
@@ -489,7 +500,6 @@ nav {
   background: var(--bg);
   color: var(--text);
   transition: border-color var(--transition);
-  outline: none;
   resize: vertical;
   appearance: none;
   -webkit-appearance: none;

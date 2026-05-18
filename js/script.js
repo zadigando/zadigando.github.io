@@ -163,19 +163,24 @@ function initMenu() {
   const navCenter = document.getElementById('nav-center');
   if (!menuBtn || !navCenter) return;
 
+  menuBtn.setAttribute('aria-expanded', 'false');
+
   menuBtn.addEventListener('click', () => {
     navCenter.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', String(navCenter.classList.contains('open')));
   });
 
   navCenter.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       navCenter.classList.remove('open');
+      menuBtn.setAttribute('aria-expanded', 'false');
     });
   });
 
   document.addEventListener('click', e => {
     if (!menuBtn.contains(e.target) && !navCenter.contains(e.target)) {
       navCenter.classList.remove('open');
+      menuBtn.setAttribute('aria-expanded', 'false');
     }
   });
 }
@@ -231,6 +236,9 @@ function initContactForm() {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
+  const yearEl = document.getElementById('year');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
   initLang();
   initMenu();
   initReveal();
