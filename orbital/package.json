@@ -1,0 +1,26 @@
+{
+  "name": "zadig-orbital-poc",
+  "private": true,
+  "version": "0.1.0",
+  "description": "PoC Cinematic 2D-First — The Arrival (Contraluz) + The Orbital Atlas. Aplicação isolada em /orbital/; não toca o site da raiz.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "verify": "node scripts/verify.mjs",
+    "shots": "node scripts/shots.mjs",
+    "video": "node scripts/capture-video.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.1",
+    "typescript": "5.9.3",
+    "vite": "7.1.12",
+    "vitest": "3.2.4"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

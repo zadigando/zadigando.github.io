@@ -1,0 +1,46 @@
+/* ===== Mundo expandido: cena, não modal =====
+   O vídeo de navegação real ocupa o quadro inteiro entre barras de letterbox; o texto é um terço inferior. */
+.world { position: fixed; inset: 0; z-index: 150; --tint: #d9c9a3; background: var(--void); }
+.world[hidden] { display: none; }
+.world-scrim { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 50% 50%, color-mix(in srgb, var(--tint) 14%, var(--void)), var(--void) 72%); }
+.world-body { position: absolute; inset: 0; }
+.world-body.is-animating .world-media { visibility: hidden; }
+.world-media { position: absolute; left: 0; right: 0; top: 8svh; bottom: 8svh; overflow: hidden; background: #0f1014; }
+.world-media video, .world-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0%; }
+.world-media video[hidden] { display: none; }
+.world-media video:not([hidden]) + img { opacity: 0; transition: opacity 0.4s 0.3s; }
+/* gradiente de leitura do terço inferior */
+.world-media::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(7, 8, 11, 0.35) 0%, rgba(7, 8, 11, 0) 20%, rgba(7, 8, 11, 0) 40%, rgba(7, 8, 11, 0.7) 68%, rgba(7, 8, 11, 0.96) 100%); }
+.world-notice { position: absolute; right: var(--gutter); top: calc(8svh + 16px); padding: 7px 11px; border-radius: 999px; background: rgba(7, 8, 11, 0.6); border: 1px solid rgba(241, 236, 226, 0.14); color: var(--bone-2); font-size: 10px; backdrop-filter: blur(6px); max-width: 60vw; z-index: 2; }
+.world-ghost { position: fixed; z-index: 160; background-size: cover; background-position: top; transform-origin: top left; border-radius: 6px; box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6); pointer-events: none; }
+
+.world-text { position: absolute; left: var(--gutter); right: calc(var(--gutter) + 44px); bottom: calc(8svh + 32px); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; align-items: end; z-index: 2; }
+.world-text > .meta { grid-column: 1 / -1; margin-bottom: -8px; }
+.world-title { font-family: var(--font-display); font-weight: 700; font-size: clamp(44px, 6vw, 88px); line-height: 0.94; letter-spacing: -0.035em; color: var(--bone); text-wrap: balance; }
+.world-cat { margin-top: 10px; font-family: var(--font-voice); font-style: italic; font-size: 22px; color: color-mix(in srgb, var(--tint) 60%, var(--bone)); font-variation-settings: 'opsz' 36, 'SOFT' 50; }
+.world-right { display: grid; gap: 6px; }
+.world-k { margin-top: 10px; margin-bottom: 2px; }
+.world-thesis { font-size: 15px; line-height: 1.55; color: var(--bone-2); max-width: 46ch; }
+.world-status { font-size: 12px; color: var(--mute); }
+.world-acts { margin-top: 18px; display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+.world-close { position: absolute; left: var(--gutter); top: 20px; display: inline-flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: rgba(7, 8, 11, 0.5); z-index: 3; }
+.world-close kbd { font: 10px var(--font-ui); letter-spacing: 0.1em; color: var(--mute); border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; }
+.world-close:hover { border-color: var(--warm); }
+/* a próxima cena espreita pela borda direita */
+.world-peek { position: absolute; right: 0; top: 8svh; bottom: 8svh; width: 44px; z-index: 3; display: grid; place-items: center; background: rgba(7, 8, 11, 0.55); border-left: 1px solid var(--line); color: var(--bone-2); cursor: pointer; transition: width 0.3s var(--ease-out), background 0.3s; }
+.world-peek span { writing-mode: vertical-rl; font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; white-space: nowrap; }
+.world-peek:hover { width: 56px; background: rgba(7, 8, 11, 0.75); color: var(--bone); }
+
+@media (max-width: 860px) {
+  .world-media { top: 6svh; bottom: 6svh; }
+  .world-media::after { background: linear-gradient(180deg, rgba(7, 8, 11, 0.4) 0%, rgba(7, 8, 11, 0) 18%, rgba(7, 8, 11, 0) 34%, rgba(7, 8, 11, 0.86) 58%, rgba(7, 8, 11, 0.98) 100%); }
+  .world-text { grid-template-columns: 1fr; gap: 12px; bottom: calc(6svh + 20px); right: 56px; }
+  .world-title { font-size: clamp(34px, 11vw, 48px); }
+  .world-cat { font-size: 18px; }
+  .world-thesis { font-size: 14px; }
+  .world-k:first-child { margin-top: 0; }
+  .world-notice { top: calc(6svh + 12px); bottom: auto; left: var(--gutter); right: auto; max-width: calc(100vw - 56px - var(--gutter) - 12px); font-size: 9px; }
+  .world-text { bottom: calc(6svh + 20px); }
+  .world-close { top: 12px; left: 14px; }
+  .world-peek { top: 6svh; bottom: 6svh; width: 40px; }
+}

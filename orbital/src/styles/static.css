@@ -1,0 +1,31 @@
+/* ===== Modo estático (reduced-motion, economia de dados ou escolha do visitante) =====
+   Os trilhos voltam ao fluxo normal da página: nada é fixo, nada se move. O conteúdo é o mesmo. */
+html[data-mode='static'] .track { height: auto; margin-top: 0; }
+html[data-mode='static'] .stage { position: static; height: auto; overflow: visible; }
+html[data-mode='static'] .grain { display: none; }
+
+html[data-mode='static'] .track--arrival .stage { min-height: 100svh; display: grid; grid-template-rows: 1fr auto; }
+html[data-mode='static'] .name { position: relative; height: auto; margin-top: calc(var(--header-h) + 24px); }
+html[data-mode='static'] .arrival-ui { position: static; padding-top: 24px; }
+html[data-mode='static'] .arrival-hint, html[data-mode='static'] .cartela { display: none; }
+
+html[data-mode='static'] .track--atlas .stage { padding: 96px var(--gutter) 64px; display: grid; gap: 40px; }
+html[data-mode='static'] .orbit, html[data-mode='static'] .numeral, html[data-mode='static'] .surface video, html[data-mode='static'] .surface-edge { display: none; }
+html[data-mode='static'] .track--atlas .stage::before { display: none; }
+html[data-mode='static'] .surfaces { position: static; display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+html[data-mode='static'] .surface { position: relative; width: auto !important; height: auto !important; aspect-ratio: 16 / 10; transform: none !important; opacity: 1 !important; filter: none !important; border-radius: 6px !important; }
+html[data-mode='static'] .surface img { position: absolute; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover; object-position: top; }
+html[data-mode='static'] .column { position: static; transform: none !important; opacity: 1 !important; width: auto; max-width: 560px; }
+html[data-mode='static'] .column > * { opacity: 1; }
+html[data-mode='static'] .index { position: static; opacity: 1 !important; }
+html[data-mode='static'] .hdr { background: rgba(7, 8, 11, 0.85); }
+html[data-mode='static'] .cta, html[data-mode='static'] .link, html[data-mode='static'] .surface-media { transition: none !important; }
+
+@media (max-width: 720px) {
+  html[data-mode='static'] .surfaces { grid-template-columns: 1fr; }
+  html[data-mode='static'] .surface { aspect-ratio: 4 / 5; }
+  html[data-mode='static'] .column-thesis { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
+}
