@@ -12,7 +12,8 @@
     "test": "vitest run",
     "verify": "node scripts/verify.mjs",
     "shots": "node scripts/shots.mjs",
-    "video": "node scripts/capture-video.mjs"
+    "video": "node scripts/capture-video.mjs",
+    "media": "node scripts/encode-media.mjs"
   },
   "devDependencies": {
     "playwright-core": "1.56.1",

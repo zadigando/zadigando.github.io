@@ -4,18 +4,18 @@ html[data-mode='static'] .track { height: auto; margin-top: 0; }
 html[data-mode='static'] .stage { position: static; height: auto; overflow: visible; }
 html[data-mode='static'] .grain { display: none; }
 
-html[data-mode='static'] .track--arrival .stage { min-height: 100svh; display: grid; grid-template-rows: 1fr auto; }
+html[data-mode='static'] .track--arrival .stage { min-height: 60svh; display: grid; align-content: center; padding-bottom: 24px; }
 html[data-mode='static'] .name { position: relative; height: auto; margin-top: calc(var(--header-h) + 24px); }
-html[data-mode='static'] .arrival-ui { position: static; padding-top: 24px; }
-html[data-mode='static'] .arrival-hint, html[data-mode='static'] .cartela { display: none; }
+html[data-mode='static'] .arrival-ui, html[data-mode='static'] .arrival-hint { display: none; }
 
 html[data-mode='static'] .track--atlas .stage { padding: 96px var(--gutter) 64px; display: grid; gap: 40px; }
-html[data-mode='static'] .orbit, html[data-mode='static'] .numeral, html[data-mode='static'] .surface video, html[data-mode='static'] .surface-edge { display: none; }
+html[data-mode='static'] .orbit, html[data-mode='static'] .numeral, html[data-mode='static'] .surface video, html[data-mode='static'] .surface-edge, html[data-mode='static'] .frame { display: none; }
+html[data-mode='static'] .surface-visit { opacity: 1; }
 html[data-mode='static'] .track--atlas .stage::before { display: none; }
 html[data-mode='static'] .surfaces { position: static; display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
 html[data-mode='static'] .surface { position: relative; width: auto !important; height: auto !important; aspect-ratio: 16 / 10; transform: none !important; opacity: 1 !important; filter: none !important; border-radius: 6px !important; }
 html[data-mode='static'] .surface img { position: absolute; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover; object-position: top; }
-html[data-mode='static'] .column { position: static; transform: none !important; opacity: 1 !important; width: auto; max-width: 560px; }
+html[data-mode='static'] .column { position: static; left: auto !important; translate: none; transform: none !important; opacity: 1 !important; width: auto !important; max-width: 560px; }
 html[data-mode='static'] .column > * { opacity: 1; }
 html[data-mode='static'] .index { position: static; opacity: 1 !important; }
 html[data-mode='static'] .hdr { background: rgba(7, 8, 11, 0.85); }

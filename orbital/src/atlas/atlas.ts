@@ -1,7 +1,8 @@
 import { createTrack, type Track } from '../core/track';
 import { createDamped } from '../core/raf';
 import { currentMode, immediateMotion, isPortraitLayout, onMode, prefersReducedMotion, prefersSaveData } from '../core/capabilities';
-import { clamp, coverRectMin, easeOutExpo, lerp, remap, smoothstep, type Box } from '../core/math';
+import { clamp, coverRectMin, easeInOutSine, easeOutExpo, lerp, remap, smoothstep, type Box } from '../core/math';
+import { SCENES } from '../config';
 import { worlds, pad, type World } from '../content/worlds';
 import { getLang, onLang, pick, t } from '../core/i18n';
 import { angleOf, focusAt, nearestFocus, plateauCenter, setTrackOffset, settleRange } from './orbit';
@@ -48,16 +49,20 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   const surfaces = worlds.map((w) => {
     const a = document.createElement('a');
     a.className = 'surface';
-    a.href = `#mundo-${w.id}`;
+    if (SCENES) a.href = `#mundo-${w.id}`; else { a.href = w.url; a.target = '_blank'; a.rel = 'noreferrer'; }
     a.dataset.world = w.id;
     a.style.setProperty('--tint', w.tint);
     a.innerHTML = `<span class="surface-media"><img alt="" loading="eager" decoding="async"><video muted loop playsinline preload="none" aria-hidden="true"></video></span>` +
-      `<span class="surface-tag"><b>${pad(w.index)}</b><span>${w.name}</span></span><span class="surface-edge"><b>${pad(w.index)}</b></span>`;
+      `<span class="surface-visit"><b></b><i aria-hidden="true">↗</i></span><span class="surface-edge"><b>${pad(w.index)}</b></span>`;
     a.setAttribute('aria-label', `${pad(w.index)} · ${w.name}`);
     surfacesEl.appendChild(a);
     return a;
   });
   const imgs = surfaces.map((s) => s.querySelector('img')!);
+  const visitTags = surfaces.map((s) => s.querySelector<HTMLElement>('.surface-visit b')!);
+  const labelSurfaces = () => { for (let i = 0; i < worlds.length; i++) { const w = worlds[i]!; visitTags[i]!.textContent = SCENES ? t('atlasEnter') : t('atlasOpen'); surfaces[i]!.setAttribute('aria-label', SCENES ? `${pad(w.index)} · ${w.name}` : `${pad(w.index)} · ${w.name} — ${t('atlasOpen')} (${t('atlasOpenHint')})`); } };
+  labelSurfaces();
+  enterBtn.hidden = !SCENES;
   const videos = surfaces.map((s) => s.querySelector('video')!);
 
   // ----- quadro herdado da travessia (a borda do D), por cima das superfícies -----
@@ -117,15 +122,44 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
     line.style.strokeDasharray = `${railLen}`;
     const unit = worlds.map((w) => `${pad(w.index)}  ${w.name}`).join('   ·   ') + '   ·   ';
     tp.textContent = unit.repeat(4);
-    // núcleo: no ponto da órbita à esquerda-baixo do quadro (fora do cartão), ou acima da coluna no retrato
-    const ca = portrait ? 90 : 200;
-    const [kx, ky] = [o.cx + o.rx * Math.cos((ca * Math.PI) / 180), o.cy + o.ry * Math.sin((ca * Math.PI) / 180)];
-    coreDot.setAttribute('cx', String(kx)); coreDot.setAttribute('cy', String(ky));
-    core.setAttribute('x', String(kx + (portrait ? 0 : -12))); core.setAttribute('y', String(ky + (portrait ? 18 : 4))); core.setAttribute('text-anchor', portrait ? 'middle' : 'end');
+    placeCore();
     numeral.style.fontSize = `${Math.round(portrait ? H * 0.36 : H * 0.72)}px`;
+    if (L.column) { column.style.setProperty('--col-x', `${L.column.x.toFixed(0)}px`); column.style.setProperty('--col-w', `${L.column.w.toFixed(0)}px`); }
+    else { column.style.removeProperty('--col-x'); column.style.removeProperty('--col-w'); }
     buildFrame();
     lastKey = '';
     render(q.value, true);
+  }
+  /** Núcleo "Zadig de Bem" sobre a órbita, num ponto que não cruza a coluna de texto, o quadro, o cabeçalho nem a base. */
+  function placeCore() {
+    const o = L.orbit;
+    const at = (deg: number): [number, number] => [o.cx + o.rx * Math.cos((deg * Math.PI) / 180), o.cy + o.ry * Math.sin((deg * Math.PI) / 180)];
+    if (portrait) { const [kx, ky] = at(90); coreDot.setAttribute('cx', String(kx)); coreDot.setAttribute('cy', String(ky)); core.setAttribute('x', String(kx)); core.setAttribute('y', String(ky + 18)); core.setAttribute('text-anchor', 'middle'); core.style.visibility = ''; return; }
+    const len = core.getComputedTextLength() || 96;
+    // altura da coluna no pior caso (o título mais longo), para o núcleo não mudar de lugar entre mundos
+    const cur = colTitle.textContent;
+    const colH = Math.max(...worlds.map((w) => { colTitle.textContent = w.name; return column.offsetHeight; }));
+    colTitle.textContent = cur;
+    const colTop = column.offsetTop - colH / 2; // `translate: 0 -50%`
+    const obstacles: Box[] = [L.front, ...(L.column ? [{ x: L.column.x, y: colTop, w: L.column.w, h: colH }] : []), { x: 0, y: 0, w: W, h: 72 + 40 }, { x: 0, y: H - 56, w: W, h: 56 }];
+    // distância (px) entre duas caixas; negativa quando se cruzam
+    const gap = (a: Box, b: Box) => Math.max(Math.max(b.x - (a.x + a.w), a.x - (b.x + b.w)), Math.max(b.y - (a.y + a.h), a.y - (b.y + b.h)));
+    let best: { kx: number; ky: number; anchor: 'end' | 'start'; clear: number } | null = null;
+    // varre a órbita (lado esquerdo e inferior, longe das frestas) e escolhe o ponto com mais folga
+    for (let deg = 100; deg <= 262; deg += 3) {
+      const [kx, ky] = at(deg);
+      for (const anchor of ['end', 'start'] as const) {
+        const label: Box = anchor === 'end' ? { x: kx - 12 - len, y: ky - 7, w: len + 16, h: 14 } : { x: kx - 4, y: ky - 7, w: len + 16, h: 14 };
+        if (label.x < 8 || label.x + label.w > W - 8) continue;
+        const clear = Math.min(...obstacles.map((o) => gap(label, o)));
+        if (!best || clear > best.clear) best = { kx, ky, anchor, clear };
+      }
+    }
+    const ok = best && best.clear >= 6;
+    const [dx, dy] = ok ? [best!.kx, best!.ky] : at(200);
+    coreDot.setAttribute('cx', String(dx)); coreDot.setAttribute('cy', String(dy));
+    core.style.visibility = ok ? '' : 'hidden';
+    if (ok) { core.setAttribute('x', String(best!.kx + (best!.anchor === 'end' ? -12 : 12))); core.setAttribute('y', String(best!.ky + 4)); core.setAttribute('text-anchor', best!.anchor); }
   }
   const ellipse = (cx: number, cy: number, rx: number, ry: number) => { let d = ''; for (let i = 0; i <= 144; i++) { const a = (i / 144) * Math.PI * 2; d += `${i ? 'L' : 'M'}${(cx + rx * Math.cos(a)).toFixed(1)} ${(cy + ry * Math.sin(a)).toFixed(1)}`; } return d + 'Z'; };
 
@@ -168,6 +202,8 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
     lastKey = key;
     const [s0, s1] = settleRange();
     const rev = smoothstep(s0, s1, p); // revelação do sistema, 0..1
+    const fr = remap(rev, 0, 0.42); // 1ª fase: a borda do D avança e dissolve
+    const rv = easeInOutSine(remap(rev, 0.26, 1)); // 2ª fase: a janela recua até o quadro; os outros emergem
     const f = focusAt(p);
     const near = Math.round(f);
     const motion = currentMode() === 'motion';
@@ -188,11 +224,11 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
       if (motion && rev < 1) {
         if (i === 0) {
           // a janela do D recua até o quadro principal (recorte contínuo)
-          box = { x: lerp(win.x, box.x, rev), y: lerp(win.y, box.y, rev), w: lerp(win.w, box.w, rev), h: lerp(win.h, box.h, rev) };
-          radius = 6 * rev; frontBox = box;
+          box = { x: lerp(win.x, box.x, rv), y: lerp(win.y, box.y, rv), w: lerp(win.w, box.w, rv), h: lerp(win.h, box.h, rv) };
+          radius = 6 * rv; frontBox = box;
         } else {
           // os outros emergem de trás da janela até as frestas, um a um
-          const e = easeOutExpo(remap(rev, 0.14 + 0.09 * (i - 1), 0.8 + 0.05 * (i - 1)));
+          const e = easeOutExpo(remap(rv, 0.1 + 0.09 * (i - 1), 0.78 + 0.05 * (i - 1)));
           const c: Box = { x: frontBox.x + frontBox.w * 0.4, y: frontBox.y + frontBox.h * 0.3, w: frontBox.w * 0.2, h: frontBox.h * 0.4 };
           box = { x: lerp(c.x, box.x, e), y: lerp(c.y, box.y, e), w: lerp(c.w, box.w, e), h: lerp(c.h, box.h, e) };
           op *= e;
@@ -216,12 +252,15 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
     // a borda do D continua avançando (a câmera não para): passa pelas bordas e se dissolve
     if (frame) {
       const vb = frame.viewBox;
-      const push = lerp(1, 0.36, easeOutExpo(rev));
+      const push = lerp(1, 0.36, easeOutExpo(rev)); // mesmo avanço do Ciclo 2: a borda passa pelas bordas da tela
       const vw = vb.w * push, vh = vb.h * push;
       const cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
       frameSvg.setAttribute('viewBox', `${cx - vw / 2} ${cy - vh / 2} ${vw} ${vh}`);
+      // a tinta das letras some primeiro (nenhuma mancha escura desliza sobre o mundo); o fio quente é o último a ir
+      frameSvg.style.setProperty('--fill', (1 - smoothstep(0, 0.35, fr)).toFixed(3));
+      frameSvg.style.setProperty('--line-op', (1 - smoothstep(0.35, 0.95, fr)).toFixed(3));
       frameSvg.style.opacity = (1 - smoothstep(0.04, 0.42, rev)).toFixed(3);
-      frameSvg.style.display = rev >= 1 || !motion ? 'none' : '';
+      frameSvg.style.display = rev >= 0.42 || !motion ? 'none' : '';
     }
 
     // órbita, núcleo, numeral, coluna
@@ -256,7 +295,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
     idxBtns.forEach((b, i) => b.setAttribute('aria-current', String(i === w.index - 1)));
     surfaces.forEach((s, i) => s.setAttribute('aria-current', String(i === w.index - 1)));
   }
-  onLang(() => { if (currentFocus >= 0) fillColumn(worlds[currentFocus]!); keys.textContent = t('atlasKeys'); });
+  onLang(() => { if (currentFocus >= 0) fillColumn(worlds[currentFocus]!); keys.textContent = t('atlasKeys'); labelSurfaces(); if (W) placeCore(); });
 
   // ----- navegação direta: rolagem NATIVA até o platô do mundo -----
   function goTo(i: number, smooth = true) {
@@ -269,8 +308,10 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
 
   surfaces.forEach((s, i) => {
     s.addEventListener('click', (e) => {
+      const isFront = focused() === i || currentMode() === 'static';
+      if (isFront && !SCENES) return; // link real: abre o site em nova aba (comportamento nativo, teclado incluído)
       e.preventDefault();
-      if (focused() === i || currentMode() === 'static') onEnter(worlds[i]!, s); else goTo(i);
+      if (isFront) onEnter(worlds[i]!, s); else goTo(i);
     });
   });
   enterBtn.addEventListener('click', () => onEnter(worlds[focused()]!, surfaces[focused()]!));

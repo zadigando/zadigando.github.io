@@ -4,10 +4,9 @@ Prova de conceito **Cinematic 2D-First** do portfólio de **Zadig de Bem**. Apli
 não toca o site da raiz, não está publicada e não tem deploy configurado.
 
 > **Conteúdo e direitos.** Chiarella Chuteiras, Jony Vision e RLG Connect aparecem com **capturas e gravações reais
-> dos sites públicos**, feitas em 17/10/2026 como material de referência interno, rotuladas na interface como
-> "captura de referência · autorização de publicação pendente". **MM Editorial** está em divulgação pública
-> restrita: esta versão usa um **cartão tipográfico substituto** (sem capturas nem vídeo), descrito a partir do brief.
-> Nenhum placeholder é apresentado como trabalho real.
+> dos sites públicos**, feitas em 17/10/2026 como material de referência interno. **MM Editorial** está em divulgação
+> pública restrita: esta versão usa um **cartão tipográfico substituto** (sem capturas nem vídeo), descrito a partir
+> do brief. Nenhum placeholder é apresentado como trabalho real.
 
 ---
 
@@ -48,21 +47,27 @@ O servidor escuta **somente em `127.0.0.1` (localhost)**: nada é exposto na red
 |---|---|
 | `npm run typecheck` | verificação de tipos (TypeScript) |
 | `npm test` | testes unitários (órbita, recorte) |
-| `npm run verify` | 63 verificações em navegador → `evidence/report.json` *(requer Chromium, ver abaixo)* |
+| `npm run verify` | verificações em navegador, 9 viewports (inclui MacBook com barra do navegador) → `evidence/report.json` *(requer Chromium)* |
 | `npm run shots -- <pasta>` | quadros por progresso do scroll *(requer Chromium)* |
-| `npm run video -- <saída.mp4> [desktop\|mobile]` | vídeo quadro a quadro *(requer Chromium e `ffmpeg`)* |
+| `npm run video -- <saída.mp4> [desktop\|mac\|mobile]` | vídeo quadro a quadro *(requer Chromium e `ffmpeg`)* |
+| `npm run media -- <pasta-origem>` | normaliza gravações manuais dos sites para `public/media/` *(requer `ffmpeg`)* — ver abaixo |
 
 `verify`, `shots` e `video` procuram o Chromium em `/opt/pw-browsers/chromium` ou na variável `CHROMIUM_PATH`.
 No seu computador, aponte para um Chrome/Chromium instalado, por exemplo:
 - macOS: `CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" npm run verify`
 - Windows (PowerShell): `$env:CHROMIUM_PATH="C:\Program Files\Google\Chrome\Application\chrome.exe"; npm run verify`
 
-Esses três são ferramentas de evidência; **não são necessários para navegar pela experiência.**
+Esses são ferramentas de evidência; **não são necessários para navegar pela experiência.**
 
-### Atalhos na experiência
-- Role para atravessar o nome e chegar ao Atlas. **Setas ← →** ou **teclas 1–4** trocam de mundo. **Enter/clique** no quadro em foco abre a cena; **Esc** ou o botão "Voltar ao atlas" fecham.
-- Parâmetros de URL: `?lang=en` · `?mode=static` (sem movimento) · `?mode=motion` · `#mundo-chiarella` / `#mundo-jony` / `#mundo-rlg` / `#mundo-mm` (link direto para a cena).
-- O botão **"Versão estática"** no cabeçalho desliga os trilhos de rolagem; `prefers-reduced-motion` do sistema também.
+### Na experiência
+- Role para atravessar o nome e chegar ao Atlas. **Setas ← →** ou **teclas 1–4** trocam de mundo. **Clique/toque ou
+  Enter** no quadro em foco **abre o site real em nova aba**; as frestas laterais trocam de mundo; "Visitar site" fica
+  sempre visível na coluna.
+- Parâmetros de URL: `?lang=en` · `?mode=static` (sem movimento) · `?mode=motion` · `#mundo-chiarella` /
+  `#mundo-jony` / `#mundo-rlg` / `#mundo-mm` (link direto ao platô do mundo) · `?scenes=1` (liga a **cena expandida**
+  antiga — "Entrar no mundo", diálogo em tela cheia — preservada atrás de flag para os case studies).
+- Não há botão de modo: a versão estática entra sozinha com `prefers-reduced-motion` ou economia de dados do sistema.
+- A barra de rolagem fica oculta; a rolagem continua nativa (roda, trackpad, teclado, âncoras).
 
 ### Se algo der errado
 - `npm ci` reclama da versão do Node → atualize para 20.19+ ou 22+.
@@ -73,55 +78,98 @@ Esses três são ferramentas de evidência; **não são necessários para navega
 
 ---
 
+## Gravações manuais dos sites (vídeos dos mundos)
+
+As gravações automatizadas (Playwright headless) saem travadas (5–12 fps efetivos). A PoC espera gravações
+**manuais**, normalizadas por `npm run media`.
+
+**Desktop (Chiarella, Jony Vision, RLG Connect)**
+- Chrome com viewport **1440×900** px CSS, zoom 100 %, tela Retina. Esconda a barra do navegador (tela cheia,
+  ⌃⌘F) e grave só a área da página.
+- QuickTime (Arquivo → Nova gravação de tela → selecionar parte da tela) ou OBS, **60 fps**, sem áudio, sem cursor
+  (cursor fora da área; "Mostrar cliques do mouse" desligado).
+- "Não perturbe" ligado, página carregada antes de iniciar (sem tela branca), idioma pt-BR. Comece no topo, rolagem
+  **lenta e contínua** pelo trackpad, pausas de 1–1,5 s nos momentos-chave, sem hover em menus. **14–20 s**.
+  - Chiarella: hero → "Criar minha chuteira" → 2–3 etapas do configurador.
+  - Jony Vision: hero → trabalhos/galeria → um projeto aberto.
+  - RLG Connect: hero → manifesto → serviços/etapas.
+
+**Mobile**
+- iPhone, gravação nativa de tela (Central de Controle), retrato, Safari com barras recolhidas, **10–15 s**, roteiro
+  resumido. Alternativa: Chrome desktop em modo dispositivo 390×844 @3x, gravando a região.
+
+**Entrega e normalização**
+- Guarde os originais (.mov/.mp4 na qualidade máxima) numa pasta **fora do repositório**, com estes nomes:
+  `chiarella-desktop.mov`, `chiarella-mobile.mov`, `jony-desktop.mov`, `jony-mobile.mov`, `rlg-desktop.mov`,
+  `rlg-mobile.mov` (a extensão pode ser .mp4/.m4v/.webm/.mkv).
+- Rode, por exemplo:
+  ```bash
+  npm run media -- ~/orbital-capturas            # gera em public/media/
+  npm run media -- ~/orbital-capturas --dry      # só mostra o plano e a fluidez de cada origem
+  npm run media -- ~/orbital-capturas --ids jony --start 0.8 --max 16
+  ```
+  O script mede a fluidez da origem (quadros únicos / totais; avisa abaixo de 80 %), descarta o início branco
+  automaticamente (`--start auto`), e gera **30 fps constantes**: `<id>-desktop.mp4` (H.264 1920×1200) +
+  `.webm` (VP9) + `<id>-desktop-poster.jpg` (2880×1800), e `<id>-mobile.*` (780×1688). Os nomes são os que
+  `src/content/worlds.ts` já usa; depois `npm run build && npm run verify`.
+- **MM Editorial não passa por este pipeline** (material restrito; o script recusa `--ids mm`).
+
+---
+
 ## O que a PoC faz
 
 1. **The Arrival · Contraluz.** O nome `ZADIG DE BEM` em SVG, cada linha enchendo a medida pelo **eixo de largura**
-   da fonte variável (Archivo). Um único progresso (scroll nativo) conduz três momentos contínuos:
-   chegada (nome em marfim) → **a luz passa para trás** (letras escuras, fio quente; dentro da contraforma do D de "DE"
-   abre-se uma **janela em letterbox**, com a proporção da tela) → **travessia** (a `viewBox` mergulha na contraforma).
-   A travessia termina com a **borda do D ainda no quadro**: a janela é uma passagem, não o destino.
-   A contraforma é **medida no raster do próprio glifo**.
+   da fonte variável (Archivo). O corpo é limitado pela largura **e pela altura útil** (entre o cabeçalho e a margem
+   inferior): em telas largas e baixas (MacBook com a barra do navegador) o nome continua monumental sem cortes nem
+   sobreposições; quando a altura manda, o eixo de largura e um tracking discreto completam a medida. A abertura é só
+   o nome e a indicação de rolagem. Um único progresso (scroll nativo) conduz três momentos contínuos: chegada →
+   **a luz passa para trás** (letras escuras, fio quente; dentro da contraforma do D de "DE" abre-se uma **janela em
+   letterbox**) → **travessia**. A câmera mantém a janela **sempre no quadro**: a posição dela na tela caminha
+   monotonicamente até o centro enquanto o zoom logarítmico fecha, e o quadro final nunca é mais largo que o D
+   (a borda fica no quadro; o E nunca entra). A contraforma é **medida no raster do próprio glifo**.
 2. **Revelação de escala (Arrival → Atlas).** O Atlas assume o último quadro da travessia (verificado por RMSE < 0,01)
-   e **continua o mesmo movimento para a frente**: a borda do D passa pelas bordas da tela e se dissolve, a janela recua
-   para o seu lugar e os outros três mundos emergem de trás dela, enquanto a órbita se desenha e o núcleo
-   "Zadig de Bem" aparece. O que parecia o destino era uma entre quatro superfícies.
+   e continua o movimento, em sequência: a tinta das letras some, a borda do D avança pelas bordas da tela e dissolve;
+   só então a janela recua para o seu lugar e os outros três mundos emergem de trás dela, enquanto a órbita se
+   desenha. Nenhuma mancha da letra desliza sobre o mundo.
 3. **The Orbital Atlas (aberturas, não miniaturas).** O mundo em foco é uma cena: ocupa o quadro principal com a
    **navegação real do site em vídeo**, a cor do próprio site tinge o palco e o seu numeral monumental ocupa o fundo.
-   Os outros mundos são **frestas verticais nas bordas da tela, na mesma escala** (recortes de mundos vizinhos), e o
-   quarto fica atrás do quadro. A órbita passa por trás das frestas, maior que o quadro, com o trilho tipográfico dos
-   nomes. Entre mundos, a fresta da direita abre até virar o quadro e o quadro fecha até virar a fresta da esquerda
-   (`stageLayout.ts`). Scroll por patamares; clique/toque, setas e teclas 1–4 vão direto.
-4. **Mundo expandido (cena).** O vídeo de navegação real ocupa o quadro inteiro entre barras de letterbox; título
-   monumental e tese no terço inferior; a próxima cena espreita pela borda direita. Entre mundos, um wipe com direção.
-   Diálogo acessível: hash (`#mundo-rlg`), Esc/voltar fecham, foco preso, `inert` no resto.
+   Os outros mundos são **frestas verticais nas bordas da tela, na mesma escala**; o quarto fica atrás do quadro.
+   Zonas seguras: fresta esquerda | coluna de texto | quadro | fresta direita nunca se cruzam (`stageLayout.ts`).
+   O quadro em foco é o **link do site real** (clique/toque/Enter abrem em nova aba; ao passar o ponteiro aparece
+   "Abrir o site ↗"); as frestas trocam de mundo. Scroll por patamares; setas e teclas 1–4 vão direto; `#mundo-<id>`
+   leva ao platô (histórico e retorno nativos).
+4. **Cena expandida (atrás de flag, `?scenes=1`).** O mecanismo do Ciclo 3 (vídeo em tela cheia entre barras de
+   letterbox, FLIP, wipe entre mundos, diálogo acessível) está preservado em `world/world.ts` para os case studies
+   completos; desligado por padrão para encurtar o caminho até o projeto real.
 5. **Retrato.** Direção própria: nome em três linhas, janela no D de "DE", quadro em foco no alto com frestas laterais,
    coluna abaixo.
-6. **PT-BR/EN** (detecção, troca persistente), **modo estático** (reduced-motion, economia de dados ou botão):
-   os trilhos voltam ao fluxo normal, o conteúdo e a navegação continuam.
+6. **PT-BR/EN** (detecção, troca persistente), **modo estático** automático (reduced-motion, economia de dados ou
+   `?mode=static`): os trilhos voltam ao fluxo normal, o conteúdo e a navegação continuam.
 
-Sem WebGL, sem biblioteca de animação, sem scroll-jacking, sem loader, sem áudio. Build: ~33 kB de JS + ~17 kB de CSS
-(gzip ~17 kB no total), três fontes variáveis (~150 kB), posters a 2× (~1 MB) e vídeos sob demanda (só o mundo em foco).
+Sem WebGL, sem biblioteca de animação, sem scroll-jacking, sem loader, sem áudio. Build: ~37 kB de JS + ~19 kB de CSS
+(gzip ~19 kB no total), três fontes variáveis (~150 kB), posters a 2× (~1 MB) e vídeos sob demanda (só o mundo em foco).
 
 ## Arquitetura
 
 ```
 src/
-  main.ts                 liga capítulos, idioma, modo, âncoras no palco fixo
+  main.ts                 liga capítulos, idioma, âncoras no palco fixo, flag de cenas
+  config.ts               SCENES (cena expandida) — `?scenes=1`
   core/   track.ts        trilho: palco sticky + progresso = f(scrollY), reversível
           raf.ts          valor amortecido com renderização sob demanda
           capabilities.ts reduced-motion, saveData, override, modo
           i18n.ts         dicionário tipado PT/EN, data-i18n
           math.ts         clamp/lerp/eases, coverRect/coverRectMin (recorte com ponto focal e escala mínima)
-  arrival/ nameFit.ts     composição do nome por eixo de largura + medição da contraforma
-           arrival.ts     coreografia Contraluz (luz, fenda, mergulho) + quadro final herdado pelo Atlas
+  arrival/ nameFit.ts     composição do nome por largura E altura (eixo de largura, tracking) + medição da contraforma
+           arrival.ts     coreografia Contraluz (luz, fenda, mergulho com a janela sempre no quadro) + quadro final
   atlas/   orbit.ts       patamares e foco contínuo (testados)
-           stageLayout.ts composição por aberturas: quadro, frestas, lado de trás (testável)
-           atlas.ts       superfícies com vídeo, trilho tipográfico, numeral, revelação, navegação
-  world/   world.ts       cena expandida (FLIP, vídeo, wipe entre mundos, foco, hash)
+           stageLayout.ts composição por aberturas e zonas seguras: quadro, frestas, coluna (testável)
+           atlas.ts       superfícies-link com vídeo, trilho tipográfico, numeral, revelação sequenciada, navegação
+  world/   world.ts       cena expandida (FLIP, vídeo, wipe entre mundos, foco, hash) — atrás da flag
   content/ worlds.ts      os quatro mundos (URLs verificadas, mídia, pontos focais, status)
            strings.ts     textos PT/EN
   styles/                 tokens, base, arrival, atlas, world, static
-scripts/  verify.mjs · shots.mjs · capture-video.mjs
+scripts/  verify.mjs · shots.mjs · capture-video.mjs · encode-media.mjs
 tests/    orbit.test.ts
 ```
 
@@ -135,7 +183,7 @@ portados de hooks React para módulos TypeScript puros.
 
 - Verificação em Chromium headless; Safari/Firefox e aparelhos físicos ainda não testados por aqui.
 - Copy provisória; os textos dos mundos reproduzem a tese do brief, não resultados.
-- As gravações do configurador da Chiarella foram automatizadas e são curtas; uma gravação manual renderia um vídeo
-  melhor para esse mundo.
+- Os vídeos atuais vêm de gravações automatizadas travadas; serão substituídos pelas gravações manuais
+  (ver "Gravações manuais dos sites").
 - MM Editorial: cartão substituto até autorização da cliente.
 - The Origin, The Archive e The Connection ficam para os próximos ciclos.

@@ -1,7 +1,7 @@
 // Vídeo QUADRO A QUADRO da experiência (sobre o build em dist/): cada quadro = rolagem nativa até uma
 // posição → espera o amortecimento convergir → screenshot. Mostra composição e continuidade reais;
 // o ritmo é o da montagem (não mede fluidez de GPU).
-// uso: node scripts/capture-video.mjs <saída.mp4> [desktop|mobile] [fps]
+// uso: node scripts/capture-video.mjs <saída.mp4> [desktop|mac|mobile] [fps]   (mac = 1440×692, viewport de MacBook com a barra do navegador)
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -12,7 +12,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = process.argv[2] || join(root, 'evidence', 'video', 'orbital.mp4');
 const fmt = process.argv[3] || 'desktop';
 const FPS = Number(process.argv[4] || 24);
-const F = { desktop: { width: 1440, height: 900, dpr: 1, mobile: false }, mobile: { width: 390, height: 844, dpr: 2, mobile: true } }[fmt];
+const F = { desktop: { width: 1440, height: 900, dpr: 1, mobile: false }, mac: { width: 1440, height: 692, dpr: 1, mobile: false }, mobile: { width: 390, height: 844, dpr: 2, mobile: true } }[fmt];
+if (!F) { console.error('formato desconhecido:', fmt); process.exit(2); }
 const frames = out.replace(/\.mp4$/, '') + '-frames';
 rmSync(frames, { recursive: true, force: true }); mkdirSync(frames, { recursive: true }); mkdirSync(dirname(out), { recursive: true });
 

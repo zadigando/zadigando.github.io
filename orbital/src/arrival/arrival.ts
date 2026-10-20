@@ -2,13 +2,13 @@ import { fitName, type Fit } from './nameFit';
 import { createTrack, type Track } from '../core/track';
 import { createDamped } from '../core/raf';
 import { currentMode, immediateMotion, isPortraitLayout, onMode } from '../core/capabilities';
-import { coverRect, easeInOutCubic, easeInOutSine, hex, logLerp, mix, remap, smoothstep, lerp, type Box } from '../core/math';
+import { clamp, coverRect, easeInOutCubic, easeInOutSine, hex, logLerp, mix, remap, smoothstep, lerp, type Box } from '../core/math';
 import { worlds } from '../content/worlds';
-import { onLang, pick } from '../core/i18n';
 
 const BONE = hex('#f1ece2');
 const INK = hex('#0b0c10');
-/** No fim da travessia a borda do D continua visível: a janela ocupa ~70% do quadro (não é tela cheia). */
+const HEADER_H = 72;
+/** No fim da travessia a borda do D continua visível: o quadro é um múltiplo da janela, nunca mais largo que o D. */
 const RIM = { landscape: 1.42, portrait: 1.5 };
 
 /** Quadro final da travessia, para o Atlas assumir no mesmo instante e continuar o movimento. */
@@ -28,9 +28,10 @@ export interface Arrival { track: Track; finalFrame(): FinalFrame | null }
  * Capítulo 01 — The Arrival · Contraluz.
  * Um único progresso (scroll nativo do trilho) conduz três momentos contínuos:
  *   chegada (nome em marfim) → a luz passa para trás (letras escuras, fio quente, a contraforma do D abre)
- *   → travessia (a viewBox mergulha na contraforma; o mundo 01 aparece pela janela, com a borda do D no quadro).
- * O Atlas continua o mesmo movimento para a frente: a borda passa pelas bordas da tela e a janela
- * revela-se uma entre quatro superfícies em órbita.
+ *   → travessia (a câmera mergulha na contraforma; o mundo 01 aparece pela janela, com a borda do D no quadro).
+ * A câmera mantém a janela sempre dentro do quadro: a posição da janela na tela vai monotonicamente do
+ * lugar onde está no nome até o centro, enquanto o zoom (logarítmico) fecha. Nada desvia por outras letras.
+ * O Atlas continua o mesmo movimento para a frente.
  */
 export function initArrival(opts: { onComposed: () => void }): Arrival {
   const track = createTrack('arrival');
@@ -41,7 +42,6 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
   const windowImg = document.getElementById('window') as unknown as SVGImageElement;
   const clipRect = document.getElementById('c-rect') as unknown as SVGRectElement;
   const ui = track.stage.querySelector<HTMLElement>('.arrival-ui')!;
-  const cartela = track.stage.querySelector<HTMLElement>('.cartela')!;
   const hdr = document.getElementById('hdr')!;
   const first = worlds[0]!;
 
@@ -50,8 +50,14 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
   let finalBox = { cx: 0, cy: 0, w: 1, h: 1 };
   /** A janela: toda a largura do vão do D, mas só a faixa de altura com a proporção da tela (letterbox dentro da letra). */
   const windowBox = (): Box => { const c = fit!.counter; const h = Math.min(c.h, finalBox.h * 1.06); return { x: c.x, y: finalBox.cy - h / 2, w: c.w, h }; };
+  /** Largura do quadro final: borda do D visível dos dois lados (≥ 1,18× a janela) e nunca além da tinta do D (o E não entra). */
+  const finalWidth = () => {
+    const { counter, ink } = fit!;
+    const want = finalBox.w * (portrait ? RIM.portrait : RIM.landscape);
+    return clamp(want, Math.min(counter.w * 1.18, ink.w * 0.96), ink.w * 0.96);
+  };
   const finalVB = () => {
-    const vw = finalBox.w * (portrait ? RIM.portrait : RIM.landscape), vh = (vw * H) / W;
+    const vw = finalWidth(), vh = (vw * H) / W;
     return { x: finalBox.cx - vw / 2, y: finalBox.cy - vh / 2, w: vw, h: vh };
   };
 
@@ -76,15 +82,22 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     W = track.stage.clientWidth; H = currentMode() === 'static' ? Math.round(W * (isPortraitLayout() ? 1.6 : 0.62)) : track.stage.clientHeight; portrait = isPortraitLayout();
     svg.style.height = '';
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    // faixa útil: abaixo do cabeçalho, acima da margem inferior (onde fica a indicação de rolagem no retrato)
+    const band = portrait
+      ? { top: HEADER_H + H * 0.03, bottom: H - Math.max(72, H * 0.1) }
+      : { top: HEADER_H + H * 0.045, bottom: H - Math.max(44, H * 0.07) };
+    // telas mais altas que largas (telefone e tablet em pé) compõem em três linhas; as demais em duas
+    const tall = portrait || H > W;
     fit = fitName(svg, group, {
-      lines: portrait ? ['ZADIG', 'DE', 'BEM'] : ['ZADIG', 'DE BEM'],
-      width: W, height: H, gutter: portrait ? 20 : Math.max(32, W * 0.034),
+      lines: tall ? ['ZADIG', 'DE', 'BEM'] : ['ZADIG', 'DE BEM'],
+      width: W, gutter: portrait ? 20 : Math.max(32, W * 0.034),
       fill: portrait ? 1 : 0.94,
-      top: portrait ? H * 0.16 : H * 0.165,
-      lineHeight: portrait ? 0.88 : 0.86,
-      minStretch: 62, maxStretch: 125, weight: 800, family: 'Archivo',
+      band, bias: tall ? 0.4 : 0.47,
+      lineHeight: tall ? 0.88 : 0.86,
+      minStretch: 62, maxStretch: 125, maxTracking: 0.04, weight: 800, family: 'Archivo',
       window: { line: 1, char: 0 },
     });
+    svg.dataset.limit = fit.limitedBy; svg.dataset.size = String(Math.round(fit.size));
     const { counter } = fit;
     const media = portrait ? first.media.mobile : first.media.desktop;
     windowImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', media.poster);
@@ -109,8 +122,6 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     const key = p.toFixed(4);
     if (!force && key === lastKey) return;
     lastKey = key;
-    const { counter } = fit;
-    const cx = counter.x + counter.w / 2, cy = counter.y + counter.h / 2;
 
     // 1) contraluz: a luz passa para trás do nome
     const light = smoothstep(0.08, 0.40, p);
@@ -131,13 +142,15 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     clipRect.setAttribute('width', String(ww)); clipRect.setAttribute('height', String(Math.max(0, wh)));
     windowImg.setAttribute('opacity', open > 0.001 ? '1' : '0');
 
-    // 3) travessia: a viewBox mergulha na contraforma (zoom em escala logarítmica = velocidade perceptual constante);
-    //    termina com a borda do D ainda no quadro: a janela é uma passagem, não o destino
+    // 3) travessia: zoom em escala logarítmica (velocidade perceptual constante) com a janela SEMPRE no quadro:
+    //    a posição da janela na tela vai monotonicamente de onde ela está no nome até o centro.
+    //    Termina com a borda do D ainda no quadro: a janela é uma passagem, não o destino.
     const z = easeInOutCubic(remap(p, 0.44, 1));
     const fvb = finalVB();
     const vw = logLerp(W, fvb.w, z);
     const vh = (vw * H) / W;
-    const vx = lerp(W / 2, finalBox.cx, z) - vw / 2, vy = lerp(H / 2, finalBox.cy, z) - vh / 2;
+    const fx = lerp(finalBox.cx / W, 0.5, z), fy = lerp(finalBox.cy / H, 0.5, z);
+    const vx = finalBox.cx - fx * vw, vy = finalBox.cy - fy * vh;
     svg.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`);
     svg.dataset.p = p.toFixed(4); svg.dataset.z = z.toFixed(4);
 
@@ -148,15 +161,10 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     windowImg.setAttribute('x', String(r.x)); windowImg.setAttribute('y', String(r.y));
     windowImg.setAttribute('width', String(r.w)); windowImg.setAttribute('height', String(r.h));
 
-    // interface: some durante a travessia; a cartela do mundo entra no meio do mergulho
-    const uiOut = 1 - smoothstep(0.42, 0.56, p);
+    // interface mínima (indicação de rolagem) some quando a travessia começa; o cabeçalho sai durante o mergulho
+    const uiOut = 1 - smoothstep(0.3, 0.48, p);
     ui.style.opacity = uiOut.toFixed(3);
-    ui.style.pointerEvents = uiOut < 0.2 ? 'none' : '';
-    ui.style.transform = `translateY(${(1 - uiOut) * 14}px)`;
     hdr.dataset.hidden = String(p > 0.5 && p < 0.985);
-    const cIn = smoothstep(0.6, 0.74, p) * (1 - smoothstep(0.93, 1, p));
-    cartela.style.opacity = cIn.toFixed(3);
-    cartela.style.transform = `translateY(${(1 - cIn) * 18}px)`;
   }
   progress.subscribe((v) => render(v));
 
@@ -176,11 +184,6 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     for (const id of ['g-warm', 'g-sheen', 'c-window', 'c-rect', 'glow', 'name-text']) inner = inner.split(`"${id}"`).join(`"af-${id}"`).split(`#${id})`).join(`#af-${id})`);
     return { viewBox: vb, window: windowPx, svgInner: inner, hole: wb };
   }
-
-  const cartelaName = document.getElementById('cartela-name')!;
-  const cartelaCat = document.getElementById('cartela-cat')!;
-  const fillCopy = () => { cartelaName.textContent = first.name; cartelaCat.textContent = pick(first.category); };
-  fillCopy(); onLang(fillCopy);
 
   // recomposição: fontes prontas, redimensionamento, mudança de modo
   let raf = 0;
@@ -207,7 +210,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     const top = Math.max(0, bb.y - fit.size * 0.12), bottom = bb.y + bb.height + fit.size * 0.1;
     svg.setAttribute('viewBox', `0 ${top} ${W} ${bottom - top}`);
     svg.style.height = `${((bottom - top) / W) * svg.clientWidth}px`;
-    ui.style.opacity = ''; ui.style.pointerEvents = ''; ui.style.transform = ''; cartela.style.opacity = '0'; hdr.dataset.hidden = 'false';
+    ui.style.opacity = ''; hdr.dataset.hidden = 'false';
   }
   compose();
   return { track, finalFrame };

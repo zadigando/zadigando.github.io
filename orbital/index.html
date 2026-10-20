@@ -28,7 +28,6 @@
       <a href="#connection" data-i18n="navContact" data-chapter="connection">Contato</a>
     </nav>
     <div class="tools">
-      <button class="mode" id="mode-toggle" type="button" aria-pressed="false" data-i18n="modeStatic" data-i18n-attr="title:modeStaticHint">Versão estática</button>
       <div class="lang meta" role="group" data-i18n-attr="aria-label:langLabel">
         <button type="button" data-lang="pt" lang="pt-BR" aria-label="Português" aria-pressed="true">PT</button><span>/</span><button type="button" data-lang="en" lang="en" aria-label="English" aria-pressed="false">EN</button>
       </div>
@@ -63,19 +62,7 @@
         </svg>
 
         <div class="arrival-ui">
-          <div class="arrival-row">
-            <div class="arrival-copy">
-              <p class="meta" data-i18n="arrivalEyebrow">Capítulo 01 — The Arrival</p>
-              <p class="statement" data-i18n-html="arrivalStatement"></p>
-            </div>
-            <a class="cta" href="#atlas" id="arrival-cta"><span data-i18n="arrivalCta">Explorar os mundos</span><i aria-hidden="true"></i></a>
-          </div>
           <p class="arrival-hint meta" aria-hidden="true" data-i18n="arrivalHint">Role para atravessar</p>
-        </div>
-
-        <div class="cartela" aria-hidden="true">
-          <p class="meta"><span data-i18n="arrivalCredit">Mundo 01 / 04</span> — <b id="cartela-cat"></b></p>
-          <p class="cartela-name" id="cartela-name"></p>
         </div>
       </div>
     </section>
@@ -87,13 +74,13 @@
         <svg class="orbit" id="orbit" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true"></svg>
         <div class="surfaces" id="surfaces"></div>
         <div class="column" id="column">
-          <p class="meta"><span data-i18n="atlasEyebrow">Capítulo 02 — Selected Worlds</span> · <b id="column-index">01 / 04</b></p>
+          <p class="meta column-index"><b id="column-index">01 / 04</b></p>
           <h2 class="column-title" id="atlas-title"></h2>
           <p class="column-cat" id="column-cat"></p>
           <p class="column-thesis" id="column-thesis"></p>
           <div class="column-acts">
-            <button class="cta" type="button" id="enter"><span data-i18n="atlasEnter">Entrar no mundo</span><i aria-hidden="true"></i></button>
-            <a class="link" id="visit" href="#" target="_blank" rel="noreferrer"><span data-i18n="atlasVisit">Visitar site</span> ↗</a>
+            <a class="cta" id="visit" href="#" target="_blank" rel="noreferrer"><span data-i18n="atlasVisit">Visitar site</span><i class="ext" aria-hidden="true">↗</i></a>
+            <button class="cta" type="button" id="enter" hidden><span data-i18n="atlasEnter">Entrar no mundo</span><i aria-hidden="true"></i></button>
           </div>
         </div>
         <nav class="index" id="index" data-i18n-attr="aria-label:atlasOrbitLabel"></nav>

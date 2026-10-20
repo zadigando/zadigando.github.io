@@ -1,32 +1,27 @@
-import { installCapabilities, currentMode, setModeOverride, onMode, prefersReducedMotion } from './core/capabilities';
-import { applyStatic, setLang, onLang, t } from './core/i18n';
+import { installCapabilities, currentMode, prefersReducedMotion } from './core/capabilities';
+import { applyStatic, setLang } from './core/i18n';
 import { installTracks, measureAll } from './core/track';
 import { initArrival } from './arrival/arrival';
 import { initAtlas } from './atlas/atlas';
 import { initWorld } from './world/world';
+import { plateauCenter } from './atlas/orbit';
+import { worldById } from './content/worlds';
+import { SCENES } from './config';
 import type { Lang } from './content/strings';
 
 installCapabilities();
 applyStatic();
+document.documentElement.dataset.scenes = String(SCENES);
 
 // idioma
 document.querySelectorAll<HTMLButtonElement>('[data-lang]').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang as Lang)));
 
-// modo (estático ↔ movimento), com rótulo coerente
-const modeBtn = document.getElementById('mode-toggle') as HTMLButtonElement;
-const syncMode = () => {
-  const s = currentMode() === 'static';
-  modeBtn.setAttribute('aria-pressed', String(s));
-  modeBtn.textContent = s ? t('modeMotion') : t('modeStatic');
-};
-modeBtn.addEventListener('click', () => { setModeOverride(currentMode() === 'static' ? 'motion' : 'static'); requestAnimationFrame(measureAll); });
-onMode(syncMode); onLang(syncMode);
-
 // capítulos
-let world: ReturnType<typeof initWorld>;
+// O modo (movimento ↔ estático) é automático: prefers-reduced-motion, saveData ou `?mode=static`.
+let world: ReturnType<typeof initWorld> | null = null;
 let arrival: ReturnType<typeof initArrival> | null = null;
-const atlas = initAtlas((w, origin) => world.open(w, origin), () => arrival?.finalFrame() ?? null);
-world = initWorld((i) => atlas.goTo(i, false));
+const atlas = initAtlas((w, origin) => { if (world) world.open(w, origin); else window.open(w.url, '_blank', 'noreferrer'); }, () => arrival?.finalFrame() ?? null);
+if (SCENES) world = initWorld((i) => atlas.goTo(i, false));
 arrival = initArrival({ onComposed: () => atlas.relayout() });
 installTracks();
 
@@ -34,6 +29,7 @@ installTracks();
 function positionFor(hash: string): number | null {
   if (hash === '#arrival') return arrival!.track.start;
   if (hash === '#atlas') return atlas.track.scrollYFor(0.25);
+  if (!SCENES) { const m = /^#mundo-([a-z]+)$/.exec(hash); const w = m ? worldById(m[1]!) : undefined; if (w) return atlas.track.scrollYFor(plateauCenter(w.index - 1)); }
   return null;
 }
 document.addEventListener('click', (e) => {

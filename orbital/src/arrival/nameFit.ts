@@ -1,18 +1,24 @@
 /**
  * Composição do nome em SVG: cada linha enche a medida pelo EIXO DE LARGURA da fonte variável
- * (sem distorcer glifos). Mede a caixa de tinta do D que vira janela com o canvas (actualBoundingBox).
+ * (sem distorcer glifos). O corpo é limitado pela largura E pela altura útil (faixa entre o cabeçalho
+ * e a margem inferior): quando a altura manda, o eixo de largura (até o máximo da fonte) e um ajuste
+ * discreto de tracking enchem a medida. Mede a caixa de tinta do D que vira janela com o canvas.
  */
 export interface FitOptions {
   lines: string[];
   width: number;
-  height: number;
   gutter: number;
   /** fração da largura útil que o nome ocupa */
   fill: number;
-  top: number;
+  /** faixa vertical disponível (unidades SVG): o bloco de tinta é colocado nela */
+  band: { top: number; bottom: number };
+  /** fração da folga vertical que fica ACIMA do bloco (0,5 = centro geométrico) */
+  bias: number;
   lineHeight: number;
   minStretch: number;
   maxStretch: number;
+  /** tracking adicional máximo (em) usado só quando o eixo de largura satura */
+  maxTracking: number;
   weight: number;
   family: string;
   /** linha e caractere do D que vira janela */
@@ -21,7 +27,11 @@ export interface FitOptions {
 export interface Rect { x: number; y: number; w: number; h: number }
 export interface Fit {
   size: number;
+  /** qual limite definiu o corpo */
+  limitedBy: 'width' | 'height';
   texts: SVGTextElement[];
+  /** caixa de tinta do bloco inteiro (unidades SVG) */
+  block: Rect;
   /** caixa de tinta do glifo-janela */
   ink: Rect;
   /** contraforma (abertura) do D */
@@ -31,37 +41,74 @@ export interface Fit {
 }
 
 const NS = 'http://www.w3.org/2000/svg';
+/** `fontStretch` do canvas aceita porcentagens (Chrome 110+, Safari 17.4+); o tipo da lib só lista palavras-chave. */
+const canStretch = 'fontStretch' in CanvasRenderingContext2D.prototype;
+const setStretch = (c: CanvasRenderingContext2D, v: string): void => { (c as unknown as Record<string, string>).fontStretch = v; };
+
+/** Altura de versal da fonte (fração do corpo), medida no canvas; 0,72 se a medição não existir. */
+function capRatio(weight: number, family: string): number {
+  const ctx = document.createElement('canvas').getContext('2d')!;
+  ctx.font = `${weight} 100px ${family}`;
+  const a = ctx.measureText('H').actualBoundingBoxAscent;
+  return a > 50 && a < 100 ? a / 100 : 0.72;
+}
 
 export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): Fit {
   group.replaceChildren();
   const probe = document.createElementNS(NS, 'text');
   probe.setAttribute('x', '-99999');
   svg.appendChild(probe);
-  const widthOf = (s: string, size: number, stretch: number) => {
+  const widthOf = (s: string, size: number, stretch: number, tracking = 0) => {
     probe.textContent = s; probe.style.fontSize = `${size}px`; probe.style.fontStretch = `${stretch}%`;
+    probe.style.letterSpacing = tracking ? `${tracking}px` : '';
     return probe.getComputedTextLength();
   };
   const avail = (o.width - o.gutter * 2) * o.fill;
   const widest = Math.max(...o.lines.map((l) => widthOf(l, 100, 100)));
-  const size = (100 * avail) / widest;
+  const sizeW = (100 * avail) / widest;
+  // altura: (n−1) entrelinhas + uma versal têm de caber na faixa
+  const cap = capRatio(o.weight, o.family);
+  const n = o.lines.length;
+  const bandH = o.band.bottom - o.band.top;
+  const sizeH = bandH / ((n - 1) * o.lineHeight + cap);
+  const size = Math.min(sizeW, sizeH);
+  const limitedBy: Fit['limitedBy'] = sizeH < sizeW ? 'height' : 'width';
   const lh = size * o.lineHeight;
+  const inkH = (n - 1) * lh + cap * size;
+  // centro óptico: um pouco acima do centro geométrico da faixa (mais no retrato, onde sobra altura)
+  const firstBaseline = o.band.top + (bandH - inkH) * o.bias + cap * size;
+
   const texts: SVGTextElement[] = [];
   o.lines.forEach((line, i) => {
+    // 1) eixo de largura até encher a medida
     let lo = o.minStretch, hi = o.maxStretch, st = 100;
     for (let k = 0; k < 16; k++) {
       const mid = (lo + hi) / 2;
       if (widthOf(line, size, mid) > avail) hi = mid; else { st = mid; lo = mid; }
     }
+    // 2) se o eixo saturou perto da medida (≥ 85 %), um tracking discreto (limitado) aproxima a linha do alinhamento;
+    //    linhas curtas por desenho (p. ex. "DE" no retrato) ficam como estão. O espaçamento final (invisível) não conta.
+    let tracking = 0;
+    const w0 = widthOf(line, size, st);
+    if (w0 < avail - 0.5 && w0 >= avail * 0.85 && line.length > 1) {
+      let tlo = 0, thi = o.maxTracking * size;
+      for (let k = 0; k < 14; k++) {
+        const mid = (tlo + thi) / 2;
+        if (widthOf(line, size, st, mid) - mid > avail) thi = mid; else { tracking = mid; tlo = mid; }
+      }
+    }
     const t = document.createElementNS(NS, 'text');
     t.setAttribute('x', String(o.gutter));
-    t.setAttribute('y', String(o.top + lh * i + size * 0.74));
+    t.setAttribute('y', String(firstBaseline + lh * i));
     t.style.fontSize = `${size}px`;
     t.style.fontStretch = `${st}%`;
+    if (tracking) t.style.letterSpacing = `${tracking.toFixed(2)}px`;
     t.textContent = line;
     group.appendChild(t);
     texts.push(t);
   });
   probe.remove();
+  const block: Rect = { x: o.gutter, y: firstBaseline - cap * size, w: avail, h: inkH };
 
   const target = texts[o.window.line]!;
   const ch = target.textContent!.charAt(o.window.char);
@@ -69,12 +116,14 @@ export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): 
   const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
   const font = `${o.weight} ${size}px ${o.family}`;
   ctx.font = font;
-  (ctx as unknown as { fontStretch: string }).fontStretch = target.style.fontStretch;
+  if (canStretch) setStretch(ctx, target.style.fontStretch);
+  // sem fontStretch no canvas (navegadores antigos): aproxima o eixo de largura por escala horizontal
+  const kx = canStretch ? 1 : target.getExtentOfChar(o.window.char).width / Math.max(1, ctx.measureText(ch).width);
   const m = ctx.measureText(ch);
   const ink: Rect = {
-    x: start.x - m.actualBoundingBoxLeft,
+    x: start.x - m.actualBoundingBoxLeft * kx,
     y: start.y - m.actualBoundingBoxAscent,
-    w: m.actualBoundingBoxLeft + m.actualBoundingBoxRight,
+    w: (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) * kx,
     h: m.actualBoundingBoxAscent + m.actualBoundingBoxDescent,
   };
   // Contraforma medida no raster do próprio glifo (não por proporção fixa): varre a linha média e a coluna
@@ -84,9 +133,11 @@ export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): 
   const c2 = document.createElement('canvas'); c2.width = cw; c2.height = chh;
   const g = c2.getContext('2d', { willReadFrequently: true })!;
   g.font = `${o.weight} ${size * S}px ${o.family}`;
-  (g as unknown as { fontStretch: string }).fontStretch = target.style.fontStretch;
+  if (canStretch) setStretch(g, target.style.fontStretch);
   g.fillStyle = '#fff';
-  g.fillText(ch, m.actualBoundingBoxLeft * S + 2, m.actualBoundingBoxAscent * S + 2);
+  g.save(); g.scale(kx, 1);
+  g.fillText(ch, (m.actualBoundingBoxLeft * S * kx + 2) / kx, m.actualBoundingBoxAscent * S + 2);
+  g.restore();
   const px = g.getImageData(0, 0, cw, chh).data;
   const on = (x: number, y: number) => px[(y * cw + x) * 4 + 3]! > 128;
   const gapRow = (y: number): [number, number] | null => {
@@ -107,5 +158,5 @@ export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): 
   } else {
     counter = { x: ink.x + ink.w * 0.21, y: ink.y + ink.h * 0.145, w: ink.w * 0.58, h: ink.h * 0.71 };
   }
-  return { size, texts, ink, counter, gaps };
+  return { size, limitedBy, texts, block, ink, counter, gaps };
 }

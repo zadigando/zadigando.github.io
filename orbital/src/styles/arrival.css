@@ -4,21 +4,10 @@
 .name text { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; fill: var(--bone); paint-order: stroke fill; stroke: none; }
 .name-bg { fill: var(--void); }
 
-.arrival-ui { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 var(--gutter) 44px; z-index: 3; pointer-events: none; }
-.arrival-row { pointer-events: auto; }
-.arrival-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
-.arrival-copy .meta { margin-bottom: 12px; }
-.statement { font-family: var(--font-ui); font-weight: 400; font-size: clamp(16px, 1.35vw, 19px); line-height: 1.42; color: var(--bone-2); max-width: 46ch; letter-spacing: -0.005em; }
-.statement em { font-family: var(--font-voice); font-style: italic; font-size: 1.14em; color: var(--bone); font-variation-settings: 'opsz' 24, 'SOFT' 50; }
+/* interface mínima: só a indicação discreta de rolagem (o nome é a abertura inteira) */
+.arrival-ui { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 .arrival-hint { position: absolute; right: var(--gutter); top: 50%; transform: translate(calc(50% - 6px), -50%) rotate(90deg); white-space: nowrap; opacity: 0.8; }
-.cartela { position: absolute; left: var(--gutter); bottom: 44px; z-index: 4; opacity: 0; pointer-events: none; }
-.cartela .meta { margin-bottom: 10px; }
-.cartela-name { font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 3.4vw, 46px); letter-spacing: -0.02em; line-height: 1; color: var(--bone); font-stretch: 96%; }
 
 @media (max-width: 720px) {
-  .arrival-ui { padding-bottom: 52px; }
-  .arrival-row { flex-direction: column; align-items: flex-start; gap: 22px; }
-  .statement { max-width: none; font-size: 16px; }
-  .arrival-hint { right: auto; left: var(--gutter); top: auto; bottom: 16px; transform: none; }
-  .cartela { bottom: 40px; }
+  .arrival-hint { right: auto; left: var(--gutter); top: auto; bottom: 18px; transform: none; }
 }
