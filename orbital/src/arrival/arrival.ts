@@ -126,8 +126,23 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     gwarm.setAttribute('cx', String(ccx)); gwarm.setAttribute('cy', String(ccy));
     const gr = Math.max(W, H) * 0.5; glow.setAttribute('r', String(gr)); gwarm.setAttribute('r', String(gr));
   }
-  /** `?debug=portal`: desenha a caixa de tinta do D (vermelho), a contraforma medida (verde) e a janela (ciano). */
+  /** `?debug=portal`: desenha a caixa de tinta do D (vermelho), a contraforma medida (verde) e a janela (ciano).
+   *  Tecla `d`: baixa um JSON com o SVG inteiro naquele instante (estado exato para reprodução). */
   const DEBUG = new URLSearchParams(location.search).get('debug') === 'portal';
+  if (DEBUG) document.addEventListener('keydown', (e) => {
+    if (e.key !== 'd' && e.key !== 'D') return;
+    const atlasStage = document.querySelector<HTMLElement>('#atlas .stage');
+    const snap = {
+      when: new Date().toISOString(), ua: navigator.userAgent, viewport: [innerWidth, innerHeight, devicePixelRatio], stage: [W, H], scrollY, p: svg.dataset.p, z: svg.dataset.z, ex: svg.dataset.ex,
+      counterSource: svg.dataset.counter, advDelta: svg.dataset.advDelta, fit: fit && { size: fit.size, limitedBy: fit.limitedBy, ink: fit.ink, counter: fit.counter, portalX: fit.portal.getAttribute('x'), portalStretch: fit.portal.style.fontStretch },
+      finalBox, viewBox: svg.getAttribute('viewBox'), svgRect: svg.getBoundingClientRect().toJSON(), stageRect: track.stage.getBoundingClientRect().toJSON(),
+      atlas: atlasStage && { opacity: atlasStage.style.opacity, rect: atlasStage.getBoundingClientRect().toJSON(), tintOn: atlasStage.style.getPropertyValue('--tint-on') },
+      texts: Array.from(group.querySelectorAll('text')).map((t) => ({ text: t.textContent, x: t.getAttribute('x'), y: t.getAttribute('y'), style: t.getAttribute('style'), computed: { opacity: getComputedStyle(t).opacity, fillOpacity: getComputedStyle(t).fillOpacity, strokeOpacity: getComputedStyle(t).strokeOpacity, fontFamily: getComputedStyle(t).fontFamily, fontStretch: getComputedStyle(t).fontStretch, fontSize: getComputedStyle(t).fontSize }, bbox: (() => { try { const b = (t as SVGGraphicsElement).getBBox(); return [b.x, b.y, b.width, b.height]; } catch { return null; } })() })),
+      fonts: Array.from(document.fonts).map((f) => `${f.family} ${f.weight} ${f.stretch} ${f.status}`),
+      svg: svg.outerHTML,
+    };
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(snap, null, 1)], { type: 'application/json' })); a.download = `orbital-portal-${Math.round(scrollY)}.json`; a.click();
+  });
   function drawDebug() {
     if (!DEBUG || !fit) return;
     group.querySelectorAll('.dbg').forEach((e) => e.remove());
