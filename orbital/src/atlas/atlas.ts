@@ -65,12 +65,8 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   enterBtn.hidden = !SCENES;
   const videos = surfaces.map((s) => s.querySelector('video')!);
 
-  // ----- quadro herdado da travessia (a borda do D), por cima das superfícies -----
-  const frameSvg = document.createElementNS(NS, 'svg');
-  frameSvg.setAttribute('class', 'frame'); frameSvg.setAttribute('aria-hidden', 'true');
-  stage.insertBefore(frameSvg, column);
+  // ----- herdado da travessia: só o retângulo da janela (nenhuma tipografia entra no Atlas) -----
   let frame: FinalFrame | null = null;
-  let holeRect: SVGRectElement | null = null;
 
   // ----- órbita: linha, trilho tipográfico, núcleo -----
   const defs = document.createElementNS(NS, 'defs'); svg.appendChild(defs);
@@ -94,17 +90,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   let L: StageLayout = stageLayout(1, 1, false);
   let railLen = 1;
 
-  function buildFrame() {
-    frame = getFrame();
-    frameSvg.replaceChildren();
-    if (!frame) return;
-    const { viewBox: vb, hole } = frame;
-    frameSvg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
-    frameSvg.innerHTML = `<defs><mask id="af-hole"><rect x="${vb.x - vb.w}" y="${vb.y - vb.h}" width="${vb.w * 3}" height="${vb.h * 3}" fill="#fff"/><rect x="${hole.x}" y="${hole.y}" width="${hole.w}" height="${hole.h}" fill="#000"/></mask></defs>` +
-      `<g id="af-back" mask="url(#af-hole)">${frame.svgInner.replace(/<g id="af-name-text">[\s\S]*<\/g>\s*$/, '')}</g>` +
-      (frame.svgInner.match(/<g id="af-name-text">[\s\S]*<\/g>\s*$/)?.[0] ?? '');
-    holeRect = frameSvg.querySelector<SVGRectElement>('#af-hole rect:last-child');
-  }
+  function buildFrame() { frame = getFrame(); }
 
   const mediaOf = (w: World) => (portrait ? w.media.mobile : w.media.desktop);
 
@@ -208,8 +194,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
     lastKey = key;
     const [s0, s1] = settleRange();
     const rev = smoothstep(s0, s1, p); // revelação do sistema, 0..1
-    const fr = remap(rev, 0, 0.42); // 1ª fase: a borda do D avança e dissolve
-    const rv = easeInOutSine(remap(rev, 0.26, 1)); // 2ª fase: a janela recua até o quadro; os outros emergem
+    const rv = easeInOutSine(remap(rev, 0.12, 1)); // a janela recua até o quadro; os outros emergem
     const f = focusAt(p);
     const near = Math.round(f);
     stage.style.opacity = before ? '0' : '1';
@@ -230,6 +215,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
           // a janela do D recua até o quadro principal (recorte contínuo)
           box = { x: lerp(win.x, box.x, rv), y: lerp(win.y, box.y, rv), w: lerp(win.w, box.w, rv), h: lerp(win.h, box.h, rv) };
           radius = 6 * rv; frontBox = box;
+          s.style.setProperty('--sh', rv.toFixed(3)); // sombra e fio da superfície entram com o recuo (costura exata com o Arrival)
         } else {
           // os outros emergem de trás da janela até as frestas, um a um
           const e = easeOutExpo(remap(rv, 0.1 + 0.09 * (i - 1), 0.78 + 0.05 * (i - 1)));
@@ -253,22 +239,8 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
     }
     syncVideo(rev >= 0.6 && Math.abs(f - near) < 0.3 ? near : -1);
 
-    // a borda do D continua avançando (a câmera não para): passa pelas bordas e se dissolve
-    if (frame) {
-      const vb = frame.viewBox;
-      const push = lerp(1, 0.36, easeOutExpo(rev)); // mesmo avanço do Ciclo 2: a borda passa pelas bordas da tela
-      const vw = vb.w * push, vh = vb.h * push;
-      const cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
-      frameSvg.setAttribute('viewBox', `${cx - vw / 2} ${cy - vh / 2} ${vw} ${vh}`);
-      // o furo da máscara segue EXATAMENTE a superfície do mundo 01 na tela (não escala com o avanço da borda):
-      // nenhuma faixa escura aparece em volta da imagem enquanto a borda do D passa pelas bordas da tela
-      if (holeRect) { const kx = vw / W, ky = vh / H; holeRect.setAttribute('x', String(cx - vw / 2 + frontBox.x * kx)); holeRect.setAttribute('y', String(cy - vh / 2 + frontBox.y * ky)); holeRect.setAttribute('width', String(frontBox.w * kx)); holeRect.setAttribute('height', String(frontBox.h * ky)); }
-      // a tinta das letras some primeiro (nenhuma mancha escura desliza sobre o mundo); o fio quente é o último a ir
-      frameSvg.style.setProperty('--fill', (1 - smoothstep(0, 0.35, fr)).toFixed(3));
-      frameSvg.style.setProperty('--line-op', (1 - smoothstep(0.35, 0.95, fr)).toFixed(3));
-      frameSvg.style.opacity = (1 - smoothstep(0.04, 0.42, rev)).toFixed(3);
-      frameSvg.style.display = rev >= 0.42 || !motion ? 'none' : '';
-    }
+    // a luz do mundo tinge o palco à medida que o sistema se revela (no instante da costura o fundo é o mesmo do Arrival)
+    stage.style.setProperty('--tint-on', smoothstep(0.02, 0.4, rev).toFixed(3));
 
     // órbita, núcleo, numeral, coluna
     const sys = smoothstep(0.18, 0.95, rev);

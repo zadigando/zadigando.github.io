@@ -51,7 +51,7 @@ const frameState = (page) => page.evaluate(() => {
   const svg = document.getElementById('name'); const vb = svg.viewBox.baseVal; const c = document.getElementById('c-rect');
   const cx = c.x.baseVal.value + c.width.baseVal.value / 2, cy = c.y.baseVal.value + c.height.baseVal.value / 2;
   const letters = []; let ghosts = 0;
-  for (const t of document.querySelectorAll('#name-text text')) { const op = parseFloat(getComputedStyle(t).opacity); for (let i = 0; i < t.getNumberOfChars(); i++) { const e = t.getExtentOfChar(i); if (t.textContent[i] !== ' ' && e.x < vb.x + vb.width && e.x + e.width > vb.x && e.y < vb.y + vb.height && e.y + e.height > vb.y) { if (op > 0.02) letters.push(t.textContent[i]); else ghosts++; } } }
+  for (const t of document.querySelectorAll('#name-text text')) { const cs = getComputedStyle(t); const op = parseFloat(cs.opacity) * Math.max(parseFloat(cs.fillOpacity), parseFloat(cs.strokeOpacity)); for (let i = 0; i < t.getNumberOfChars(); i++) { const e = t.getExtentOfChar(i); if (t.textContent[i] !== ' ' && e.x < vb.x + vb.width && e.x + e.width > vb.x && e.y < vb.y + vb.height && e.y + e.height > vb.y) { if (op > 0.02) letters.push(t.textContent[i]); else ghosts++; } } }
   return { ghosts, p: +svg.dataset.p, z: +svg.dataset.z, fx: (cx - vb.x) / vb.width, fy: (cy - vb.y) / vb.height, left: (c.x.baseVal.value - vb.x) / vb.width, right: (c.x.baseVal.value + c.width.baseVal.value - vb.x) / vb.width, top: (c.y.baseVal.value - vb.y) / vb.height, bottom: (c.y.baseVal.value + c.height.baseVal.value - vb.y) / vb.height, letters: letters.join('') };
 });
 
@@ -102,9 +102,12 @@ for (const V of VIEWPORTS) {
   check(`${V.name} · janela do D sempre no quadro durante a travessia`, inside, samples.map((s) => `${s.fx.toFixed(2)},${s.fy.toFixed(2)}`).join(' '));
   check(`${V.name} · câmera caminha monotonicamente para a contraforma (sem desvio por outras letras)`, monotone, dist.map((d) => d.toFixed(2)).join(' '));
   // só o portal fica em cena enquanto a câmera avança (visibilidade real, não só posição): nenhum outro glifo visível com z > 0
-  const diving = samples.filter((s) => s.z > 0.001);
-  check(`${V.name} · durante o mergulho só o D está visível no quadro (outros glifos saíram de cena antes)`, diving.length >= 8 && diving.every((s) => s.letters === 'D'), diving.map((s) => `p${s.p.toFixed(2)}:${s.letters || '∅'}`).join(' '));
-  check(`${V.name} · quadro final centrado, só com o D (borda no quadro)`, Math.abs(end.fx - 0.5) < 0.005 && Math.abs(end.fy - 0.5) < 0.005 && end.letters === 'D' && end.right - end.left < 0.9, `fx=${end.fx.toFixed(3)} fy=${end.fy.toFixed(3)} letras=${end.letters} janela=${((end.right - end.left) * 100).toFixed(0)} % da largura`);
+  const diving = samples.filter((s) => s.z > 0.001 && s.p <= 0.9);
+  check(`${V.name} · durante o mergulho só o D está visível no quadro (outros glifos saíram de cena antes)`, diving.length >= 6 && diving.every((s) => s.letters === 'D'), diving.map((s) => `p${s.p.toFixed(2)}:${s.letters || '∅'}`).join(' '));
+  // saída do portal (p 0,90 → 1): a borda do D passa pelas bordas da tela e some; no fim não resta tipografia, só a janela centrada
+  const atExit = samples.filter((s) => s.p >= 0.9);
+  check(`${V.name} · saída do portal dentro do Arrival: no fim nenhuma letra em cena, janela centrada (o Atlas não herda tipografia)`, atExit.length >= 2 && atExit[0].letters === 'D' && end.letters === '' && end.ghosts >= 1 && Math.abs(end.fx - 0.5) < 0.005 && Math.abs(end.fy - 0.5) < 0.005 && end.right - end.left < 0.9, `p0.90:${atExit[0].letters || '∅'} … p1.00:${end.letters || '∅'} (D fora de cena: ${end.ghosts >= 1}) fx=${end.fx.toFixed(3)} fy=${end.fy.toFixed(3)} janela=${((end.right - end.left) * 100).toFixed(0)} % da largura`);
+  check(`${V.name} · Atlas sem camada tipográfica herdada`, await page.evaluate(() => !document.querySelector('#atlas .frame')));
 
   // 4) costura: quadro final da travessia == primeiro do atlas (pixel a pixel)
   await go(page, T.arrival.end, 1000); const s1 = await page.screenshot();

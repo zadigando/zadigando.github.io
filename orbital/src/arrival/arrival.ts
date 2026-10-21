@@ -16,10 +16,6 @@ export interface FinalFrame {
   viewBox: { x: number; y: number; w: number; h: number };
   /** retângulo da janela (contraforma) em px de tela */
   window: Box;
-  /** marcação SVG do quadro (fundo, luz, letras) no estado final, sem a imagem */
-  svgInner: string;
-  /** retângulo da janela em unidades do viewBox */
-  hole: Box;
 }
 
 export interface Arrival { track: Track; finalFrame(): FinalFrame | null }
@@ -32,7 +28,9 @@ export interface Arrival { track: Track; finalFrame(): FinalFrame | null }
  * A câmera mantém a janela sempre dentro do quadro: a posição da janela na tela vai monotonicamente do
  * lugar onde está no nome até o centro, enquanto o zoom (logarítmico) fecha. Antes de a câmera avançar, os
  * outros glifos saem de cena: durante o mergulho só o portal (o D) está no quadro.
- * O Atlas continua o mesmo movimento para a frente.
+ * A SAÍDA do portal também acontece aqui (p 0,90 → 1): a câmera continua avançando, a borda do D passa pelas
+ * bordas da tela e a luz se apaga, enquanto a janela fica fixa na tela. No fim não resta tipografia nenhuma:
+ * o Atlas herda só o retângulo da janela (a superfície do mundo 01) e continua o movimento para a frente.
  */
 export function initArrival(opts: { onComposed: () => void }): Arrival {
   const track = createTrack('arrival');
@@ -137,8 +135,6 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     const focus = smoothstep(0.42, 0.56, p);
     for (const t of fit.others) t.style.opacity = (1 - focus).toFixed(3);
     fit.portal.style.opacity = '1';
-    glow.setAttribute('opacity', (light * (1 - 0.45 * smoothstep(0.7, 1, p))).toFixed(3));
-
     // 2) a janela abre como uma fenda de luz, do centro da contraforma até a abertura inteira
     const open = easeInOutSine(remap(p, 0.16, 0.46));
     const wb = windowBox();
@@ -150,19 +146,32 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
 
     // 3) travessia: zoom em escala logarítmica (velocidade perceptual constante) com a janela SEMPRE no quadro:
     //    a posição da janela na tela vai monotonicamente de onde ela está no nome até o centro.
-    //    Termina com a borda do D ainda no quadro: a janela é uma passagem, não o destino.
-    const z = easeInOutCubic(remap(p, 0.52, 1));
+    //    Em p = 0,90 a borda do D ainda está no quadro: a janela é uma passagem, não o destino.
+    const z = easeInOutCubic(remap(p, 0.52, 0.9));
     const fvb = finalVB();
-    const vw = logLerp(W, fvb.w, z);
+    // 4) saída do portal (p 0,90 → 1): a câmera continua avançando — a borda do D passa pelas bordas da tela —
+    //    enquanto a janela fica FIXA na tela; a tinta some, depois o fio, depois a luz. Nada de tipografia resta.
+    const ex = easeInOutSine(remap(p, 0.9, 1));
+    const push = lerp(1, 0.5, ex);
+    const vw = logLerp(W, fvb.w, z) * push;
     const vh = (vw * H) / W;
     const fx = lerp(finalBox.cx / W, 0.5, z), fy = lerp(finalBox.cy / H, 0.5, z);
     const vx = finalBox.cx - fx * vw, vy = finalBox.cy - fy * vh;
     svg.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`);
-    svg.dataset.p = p.toFixed(4); svg.dataset.z = z.toFixed(4);
+    svg.dataset.p = p.toFixed(4); svg.dataset.z = z.toFixed(4); svg.dataset.ex = ex.toFixed(4);
+    fit.portal.style.fillOpacity = (1 - smoothstep(0, 0.45, ex)).toFixed(3);
+    fit.portal.style.strokeOpacity = (1 - smoothstep(0.3, 0.85, ex)).toFixed(3);
+    glow.setAttribute('opacity', (light * (1 - 0.45 * smoothstep(0.7, 1, p)) * (1 - smoothstep(0.15, 0.9, ex))).toFixed(3));
 
+    // a janela na saída: o mesmo retângulo de TELA (o viewBox encolhe, o retângulo em unidades encolhe junto)
+    if (ex > 0) {
+      const ww2 = wb.w * push, wh2 = wb.h * push;
+      clipRect.setAttribute('x', String(wcx - ww2 / 2)); clipRect.setAttribute('y', String(wcy - wh2 / 2));
+      clipRect.setAttribute('width', String(ww2)); clipRect.setAttribute('height', String(wh2));
+    }
     // o mundo dentro da janela: recorte "cover" com ponto focal, assentando de 1,18× para 1× (o mundo se acomoda)
     const media = portrait ? first.media.mobile : first.media.desktop;
-    const k = lerp(1.18, 1, z);
+    const k = lerp(1.18, 1, z) * push;
     const r = coverRect(media.w, media.h, { x: wcx - (wb.w * k) / 2, y: wcy - (wb.h * k) / 2, w: wb.w * k, h: wb.h * k }, media.focal);
     windowImg.setAttribute('x', String(r.x)); windowImg.setAttribute('y', String(r.y));
     windowImg.setAttribute('width', String(r.w)); windowImg.setAttribute('height', String(r.h));
@@ -174,23 +183,14 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
   }
   progress.subscribe((v) => render(v));
 
-  /** Estado final (p = 1) em marcação própria, independente do progresso atual. */
+  /** Estado final (p = 1): só o retângulo da janela em px de tela (a superfície que o Atlas herda), sem tipografia. */
   function finalFrame(): FinalFrame | null {
     if (!fit || currentMode() === 'static') return null;
     const wb = windowBox();
     const vb = finalVB();
     const s = W / vb.w;
     const windowPx: Box = { x: (wb.x - vb.x) * s, y: (wb.y - vb.y) * s, w: wb.w * s, h: wb.h * s };
-    const clone = svg.cloneNode(true) as SVGSVGElement;
-    clone.querySelector('#window')?.remove();
-    clone.querySelector('title')?.remove();
-    // no quadro final só o portal (o D) está em cena: o Atlas herda apenas ele
-    const texts = Array.from(clone.querySelectorAll('text'));
-    texts.forEach((t, i) => { if (fit!.texts[i] !== fit!.portal) { t.remove(); return; } t.style.opacity = '1'; t.style.fill = '#0b0c10'; t.style.stroke = 'rgba(255, 217, 163, 0.75)'; t.style.strokeWidth = '1.5px'; });
-    clone.querySelector('#glow')?.setAttribute('opacity', '0.55');
-    let inner = clone.innerHTML;
-    for (const id of ['g-warm', 'g-sheen', 'c-window', 'c-rect', 'glow', 'name-text']) inner = inner.split(`"${id}"`).join(`"af-${id}"`).split(`#${id})`).join(`#af-${id})`);
-    return { viewBox: vb, window: windowPx, svgInner: inner, hole: wb };
+    return { viewBox: vb, window: windowPx };
   }
 
   // recomposição: fontes prontas, redimensionamento, mudança de modo
@@ -205,7 +205,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
   function renderStatic() {
     if (!fit || currentMode() !== 'static') return;
     const wb = windowBox();
-    for (const t of fit.texts) { t.style.fill = '#f1ece2'; t.style.stroke = 'none'; t.style.opacity = '1'; }
+    for (const t of fit.texts) { t.style.fill = '#f1ece2'; t.style.stroke = 'none'; t.style.opacity = '1'; t.style.fillOpacity = ''; t.style.strokeOpacity = ''; }
     clipRect.setAttribute('x', String(wb.x)); clipRect.setAttribute('y', String(wb.y));
     clipRect.setAttribute('width', String(wb.w)); clipRect.setAttribute('height', String(wb.h));
     windowImg.setAttribute('opacity', '1');
