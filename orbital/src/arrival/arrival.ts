@@ -105,7 +105,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     const mine = fit;
     void refineCounter(mine, fo, FONT_URL).then((refined) => {
       if (!refined || fit !== mine) return;
-      fit = refined; svg.dataset.counter = 'svg';
+      fit = refined.fit; svg.dataset.counter = refined.source; svg.dataset.advDelta = (refined.advanceDelta * 100).toFixed(1) + '%';
       placeWindow(); computeFinalBox(); lastKey = ''; render(progress.value, true); renderStatic(); drawDebug(); opts.onComposed();
     });
     const media = portrait ? first.media.mobile : first.media.desktop;
@@ -139,9 +139,14 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
       group.appendChild(el);
     }
     const t = document.createElementNS('http://www.w3.org/2000/svg', 'text'); t.setAttribute('class', 'dbg'); t.setAttribute('x', String(fit.ink.x)); t.setAttribute('y', String(fit.ink.y - 6));
-    t.setAttribute('fill', '#3bff6a'); t.setAttribute('font-size', String(Math.max(8, fit.size * 0.05))); t.setAttribute('font-family', 'monospace'); t.setAttribute('style', 'font-family: monospace; font-weight: 400; letter-spacing: 0; stroke: none; fill: #3bff6a');
-    t.textContent = `contraforma: ${svg.dataset.counter} · ${navigator.userAgent.match(/(Chrome|Safari|Firefox)\/[\d.]+/)?.[0] ?? ''} · ${W}×${H}`;
-    group.appendChild(t);
+    t.setAttribute('fill', '#3bff6a'); t.setAttribute('font-size', String(Math.max(8, fit.size * 0.032))); t.setAttribute('font-family', 'monospace'); t.setAttribute('style', 'font-family: monospace; font-weight: 400; letter-spacing: 0; stroke: none; fill: #3bff6a');
+    const ext = fit.portal.getExtentOfChar(0); const r1 = (v: number) => v.toFixed(1);
+    const lines = [
+      `contraforma: ${svg.dataset.counter} (Δavanço ${svg.dataset.advDelta ?? '?'}) · ${navigator.userAgent.match(/(Chrome|Safari|Firefox)\/[\d.]+/)?.[0] ?? ''} · ${W}×${H} @${devicePixelRatio}`,
+      `corpo ${r1(fit.size)} · D stretch ${fit.portal.style.fontStretch} · avanço D ${r1(ext.width)} @x ${r1(ext.x)}`,
+      `tinta x ${r1(fit.ink.x)} w ${r1(fit.ink.w)} y ${r1(fit.ink.y)} h ${r1(fit.ink.h)} · contraforma x ${r1(fit.counter.x)} w ${r1(fit.counter.w)} y ${r1(fit.counter.y)} h ${r1(fit.counter.h)}`,
+    ];
+    lines.forEach((txt, i) => { const tt = t.cloneNode(false) as SVGTextElement; tt.setAttribute('y', String(fit!.ink.y - 6 - (lines.length - 1 - i) * Math.max(10, fit!.size * 0.04))); tt.textContent = txt; group.appendChild(tt); });
   }
 
   // amortecimento leve sobre o progresso do scroll (a pose continua função pura do progresso)

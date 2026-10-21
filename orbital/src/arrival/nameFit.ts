@@ -184,38 +184,49 @@ function counterFromRaster(px: Uint8ClampedArray, cw: number, chh: number, toUni
   return { ink, counter, gaps };
 }
 
-let fontDataCache: Promise<string> | null = null;
-/** A webfont em base64 (uma vez), para embutir num SVG-imagem: dentro dele nenhuma fonte instalada pode interferir. */
-function fontData(url: string): Promise<string> {
-  fontDataCache ??= fetch(url).then((r) => r.arrayBuffer()).then((buf) => { let s = ''; const b = new Uint8Array(buf); for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(s); });
-  return fontDataCache;
+let rasterFace: Promise<FontFace> | null = null;
+/** A webfont carregada de novo, pelos bytes, como FontFace própria ('ZdbRaster'): o canvas usa exatamente esta fonte. */
+function rasterFont(url: string): Promise<FontFace> {
+  rasterFace ??= fetch(url).then((r) => r.arrayBuffer()).then(async (buf) => {
+    const face = new FontFace('ZdbRaster', buf, { weight: '100 900', stretch: '62% 125%' });
+    await face.load(); document.fonts.add(face); return face;
+  });
+  return rasterFace;
 }
 
-/**
- * Mede de novo a contraforma a partir da RENDERIZAÇÃO SVG real do glifo: o mesmo <text>, com a mesma fonte
- * (embutida) e o mesmo eixo de largura, rasterizado pelo motor SVG do navegador — não pelo canvas de texto, cuja
- * resolução de fontes pode divergir (fontes locais homônimas, eixos). Garante que a janela cai onde o D está.
- */
-export async function refineCounter(f: Fit, o: FitOptions, fontUrl: string): Promise<Fit | null> {
+/** Proporções do D da Archivo ExtraBold (medidas no raster) em relação à caixa de avanço do glifo real — último recurso. */
+/** (em relação ao CORPO, não ao avanço: o eixo de largura muda o avanço mas quase não muda a tinta do D) */
+const D_RATIOS = { inkX: 0.017, inkW: 0.655, inkTop: 0.672, counterX: 0.364, counterW: 0.37, counterY: 0.09, counterH: 0.826 };
+
+export type CounterSource = 'canvas' | 'fontface' | 'ratio';
+export async function refineCounter(f: Fit, o: FitOptions, fontUrl: string): Promise<{ fit: Fit; source: CounterSource; advanceDelta: number } | null> {
   try {
     const portal = f.portal, ch = portal.textContent!, size = f.size;
     const ext = portal.getExtentOfChar(0);
+    const baseline = +portal.getAttribute('y')!;
+    const ls = parseFloat(getComputedStyle(portal).letterSpacing) || 0;
+    const liveAdvance = ext.width - ls; // avanço do glifo real, sem o espaçamento
+    await rasterFont(fontUrl);
     const S = 256 / Math.max(ext.width, ext.height);
     const pad = Math.ceil(0.12 * size * S);
     const cw = Math.ceil(ext.width * S) + pad * 2, chh = Math.ceil(ext.height * S) + pad * 2;
-    const baseline = (+portal.getAttribute('y')! - ext.y) * S + pad;
-    const data = await fontData(fontUrl);
-    const stretch = portal.style.fontStretch || '100%';
-    const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${cw}" height="${chh}"><style>@font-face{font-family:'ZdbRaster';src:url(data:font/woff2;base64,${data}) format('woff2');font-weight:100 900;font-stretch:62% 125%}</style><text x="${pad}" y="${baseline.toFixed(2)}" style="font-family:'ZdbRaster';font-weight:${o.weight};font-size:${(size * S).toFixed(2)}px;font-stretch:${stretch};letter-spacing:0" fill="#fff">${ch}</text></svg>`;
-    const img = new Image();
-    await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(new Error('svg raster')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr); });
     const c = document.createElement('canvas'); c.width = cw; c.height = chh;
     const g = c.getContext('2d', { willReadFrequently: true })!;
-    g.drawImage(img, 0, 0);
-    const r = counterFromRaster(g.getImageData(0, 0, cw, chh).data, cw, chh, (rx, ry) => [ext.x + (rx - pad) / S, +portal.getAttribute('y')! + (ry - baseline) / S]);
-    if (!r) return null;
-    // sanidade: a tinta medida tem de caber (com folga) na caixa de avanço do glifo real
-    if (r.ink.w < ext.width * 0.5 || r.ink.w > ext.width * 1.3) return null;
-    return { ...f, ink: r.ink, counter: r.counter, gaps: r.gaps };
+    g.font = `${o.weight} ${(size * S).toFixed(2)}px ZdbRaster`;
+    if (canStretch) setStretch(g, portal.style.fontStretch || '100%');
+    // o avanço no canvas tem de bater com o do glifo real: se não bate, o canvas não está usando a mesma fonte/eixo
+    const adv = g.measureText(ch).width / S;
+    const advanceDelta = Math.abs(adv - liveAdvance) / liveAdvance;
+    if (advanceDelta <= 0.03) {
+      g.fillStyle = '#fff'; g.fillText(ch, pad, (baseline - ext.y) * S + pad); // x = pad ⇒ origem do glifo; y = baseline no raster
+      const r = counterFromRaster(g.getImageData(0, 0, cw, chh).data, cw, chh, (rx, ry) => [ext.x + (rx - pad) / S, ext.y + (ry - pad) / S]);
+      if (r && r.ink.w > ext.width * 0.5 && r.ink.w < ext.width * 1.3) return { fit: { ...f, ink: r.ink, counter: r.counter, gaps: r.gaps }, source: 'fontface', advanceDelta };
+    }
+    // último recurso: proporções conhecidas do D, ancoradas na caixa de avanço do glifo REAL (nunca numa fonte substituta)
+    const R = D_RATIOS;
+    const ink: Rect = { x: ext.x + R.inkX * size, y: baseline - R.inkTop * size, w: R.inkW * size, h: R.inkTop * size };
+    const counter: Rect = { x: ink.x + R.counterX * ink.w, y: ink.y + R.counterY * ink.h, w: R.counterW * ink.w, h: R.counterH * ink.h };
+    const gaps: Fit['gaps'] = []; for (let k = 0; k <= 20; k++) gaps.push({ y: counter.y + (counter.h * k) / 20, x0: counter.x, x1: counter.x + counter.w });
+    return { fit: { ...f, ink, counter, gaps }, source: 'ratio', advanceDelta };
   } catch { return null; }
 }
