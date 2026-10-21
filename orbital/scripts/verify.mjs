@@ -50,9 +50,9 @@ const nameState = (page) => page.evaluate(() => { const s = document.getElementB
 const frameState = (page) => page.evaluate(() => {
   const svg = document.getElementById('name'); const vb = svg.viewBox.baseVal; const c = document.getElementById('c-rect');
   const cx = c.x.baseVal.value + c.width.baseVal.value / 2, cy = c.y.baseVal.value + c.height.baseVal.value / 2;
-  const letters = [];
-  for (const t of document.querySelectorAll('#name-text text')) for (let i = 0; i < t.getNumberOfChars(); i++) { const e = t.getExtentOfChar(i); if (t.textContent[i] !== ' ' && e.x < vb.x + vb.width && e.x + e.width > vb.x && e.y < vb.y + vb.height && e.y + e.height > vb.y) letters.push(t.textContent[i]); }
-  return { p: +svg.dataset.p, z: +svg.dataset.z, fx: (cx - vb.x) / vb.width, fy: (cy - vb.y) / vb.height, left: (c.x.baseVal.value - vb.x) / vb.width, right: (c.x.baseVal.value + c.width.baseVal.value - vb.x) / vb.width, top: (c.y.baseVal.value - vb.y) / vb.height, bottom: (c.y.baseVal.value + c.height.baseVal.value - vb.y) / vb.height, letters: letters.join('') };
+  const letters = []; let ghosts = 0;
+  for (const t of document.querySelectorAll('#name-text text')) { const op = parseFloat(getComputedStyle(t).opacity); for (let i = 0; i < t.getNumberOfChars(); i++) { const e = t.getExtentOfChar(i); if (t.textContent[i] !== ' ' && e.x < vb.x + vb.width && e.x + e.width > vb.x && e.y < vb.y + vb.height && e.y + e.height > vb.y) { if (op > 0.02) letters.push(t.textContent[i]); else ghosts++; } } }
+  return { ghosts, p: +svg.dataset.p, z: +svg.dataset.z, fx: (cx - vb.x) / vb.width, fy: (cy - vb.y) / vb.height, left: (c.x.baseVal.value - vb.x) / vb.width, right: (c.x.baseVal.value + c.width.baseVal.value - vb.x) / vb.width, top: (c.y.baseVal.value - vb.y) / vb.height, bottom: (c.y.baseVal.value + c.height.baseVal.value - vb.y) / vb.height, letters: letters.join('') };
 });
 
 for (const V of VIEWPORTS) {
@@ -64,7 +64,9 @@ for (const V of VIEWPORTS) {
 
   // 1) nome: enche a medida (largura) e cabe na faixa útil (altura), sem nada por cima
   const name = await page.evaluate((HEADER) => {
-    const texts = [...document.querySelectorAll('#name-text text')].map((t) => { const n = t.getNumberOfChars(); const e0 = t.getExtentOfChar(0), e1 = t.getExtentOfChar(n - 1); const ls = parseFloat(t.style.letterSpacing || '0'); return { w: t.getComputedTextLength() - ls, stretch: t.style.fontStretch, ls: ls.toFixed(1), text: t.textContent, inkRight: e1.x + e1.width - ls, y: +t.getAttribute('y'), size: parseFloat(t.style.fontSize) }; });
+    // o D do portal é um <text> próprio: agrupa os elementos por linha (mesma baseline) para medir a linha inteira
+    const pieces = [...document.querySelectorAll('#name-text text')].map((t) => { const n = t.getNumberOfChars(); const e1 = t.getExtentOfChar(n - 1); const ls = parseFloat(t.style.letterSpacing || '0'); return { x: +t.getAttribute('x'), right: e1.x + e1.width - ls, stretch: t.style.fontStretch, ls, text: t.textContent, y: +t.getAttribute('y'), size: parseFloat(t.style.fontSize) }; });
+    const texts = [...new Set(pieces.map((p) => p.y))].map((y) => { const ps = pieces.filter((p) => p.y === y); const x0 = Math.min(...ps.map((p) => p.x)), r = Math.max(...ps.map((p) => p.right)); return { w: r - x0, stretch: ps.map((p) => p.stretch).join('/'), ls: Math.max(...ps.map((p) => p.ls)).toFixed(1), text: ps.map((p) => p.text).join(''), inkRight: r, y, size: ps[0].size, pieces: ps.length }; });
     const c = document.createElement('canvas').getContext('2d'); c.font = '800 100px Archivo'; const cap = c.measureText('H').actualBoundingBoxAscent / 100;
     const inkTop = texts[0].y - cap * texts[0].size, inkBottom = texts[texts.length - 1].y;
     const hint = document.querySelector('.arrival-hint').getBoundingClientRect();
@@ -75,7 +77,7 @@ for (const V of VIEWPORTS) {
   const avail = (V.width - gutter * 2) * (portrait ? 1 : 0.94);
   check(`${V.name} · nome enche a medida pelo eixo de largura`, name.texts.every((t) => t.w <= avail + 2) && Math.max(...name.texts.map((t) => t.w)) >= avail * 0.98, name.texts.map((t) => `${t.text}:${Math.round(t.w)}/${Math.round(avail)}@${t.stretch}${+t.ls ? `+${t.ls}px` : ''}`).join(' '));
   const tall = V.height > V.width;
-  check(`${V.name} · ${tall ? 'três' : 'duas'} linhas (${tall ? 'tela em pé' : 'paisagem'})`, name.texts.length === (tall ? 3 : 2));
+  check(`${V.name} · ${tall ? 'três' : 'duas'} linhas (${tall ? 'tela em pé' : 'paisagem'}), portal isolado`, name.texts.length === (tall ? 3 : 2) && name.texts[1].pieces === 2 && name.texts[1].text.startsWith('D'), name.texts.map((t) => `${t.text}(${t.pieces})`).join(' '));
   const inkH = name.inkBottom - name.inkTop;
   check(`${V.name} · nome dentro da faixa útil (abaixo do cabeçalho, acima da margem) e monumental`, name.inkTop >= HEADER - 1 && name.inkBottom <= V.height - 36 && inkH >= V.height * (portrait ? 0.28 : tall ? 0.45 : 0.55), `tinta ${Math.round(name.inkTop)}→${Math.round(name.inkBottom)} de ${V.height} (${Math.round((inkH / V.height) * 100)} %) · corpo ${name.size}px limitado por ${name.limit}`);
   const hintOverName = !portrait && name.hint.x < gutter + Math.max(...name.texts.map((t) => t.inkRight)) && name.hint.b > name.inkTop && name.hint.y < name.inkBottom;
@@ -90,13 +92,18 @@ for (const V of VIEWPORTS) {
 
   // 3) trajetória: a janela do D fica SEMPRE no quadro e caminha monotonicamente para o centro; no fim, só o D
   const samples = [];
-  for (let k = 0; k <= 14; k++) { const p = 0.44 + (k / 14) * 0.56; await go(page, T.arrival.start + p * (T.arrival.end - T.arrival.start), 650); samples.push(await frameState(page)); }
+  for (let k = 0; k <= 16; k++) { const p = 0.4 + (k / 16) * 0.6; await go(page, T.arrival.start + p * (T.arrival.end - T.arrival.start), 650); samples.push(await frameState(page)); }
+  const heroIntact = samples[0].letters.replace(/ /g, '').length === 10; // p = 0,40: as dez letras ainda em cena
   const inside = samples.every((s) => s.left >= -0.002 && s.right <= 1.002 && s.top >= -0.002 && s.bottom <= 1.002);
   const dist = samples.map((s) => Math.hypot(s.fx - 0.5, s.fy - 0.5));
   const monotone = dist.every((d, i) => i === 0 || d <= dist[i - 1] + 1e-3);
   const end = samples[samples.length - 1];
+  check(`${V.name} · nome inteiro em cena até o fim da luz (p = 0,40)`, heroIntact, samples[0].letters);
   check(`${V.name} · janela do D sempre no quadro durante a travessia`, inside, samples.map((s) => `${s.fx.toFixed(2)},${s.fy.toFixed(2)}`).join(' '));
   check(`${V.name} · câmera caminha monotonicamente para a contraforma (sem desvio por outras letras)`, monotone, dist.map((d) => d.toFixed(2)).join(' '));
+  // só o portal fica em cena enquanto a câmera avança (visibilidade real, não só posição): nenhum outro glifo visível com z > 0
+  const diving = samples.filter((s) => s.z > 0.001);
+  check(`${V.name} · durante o mergulho só o D está visível no quadro (outros glifos saíram de cena antes)`, diving.length >= 8 && diving.every((s) => s.letters === 'D'), diving.map((s) => `p${s.p.toFixed(2)}:${s.letters || '∅'}`).join(' '));
   check(`${V.name} · quadro final centrado, só com o D (borda no quadro)`, Math.abs(end.fx - 0.5) < 0.005 && Math.abs(end.fy - 0.5) < 0.005 && end.letters === 'D' && end.right - end.left < 0.9, `fx=${end.fx.toFixed(3)} fy=${end.fy.toFixed(3)} letras=${end.letters} janela=${((end.right - end.left) * 100).toFixed(0)} % da largura`);
 
   // 4) costura: quadro final da travessia == primeiro do atlas (pixel a pixel)

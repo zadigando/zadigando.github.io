@@ -30,7 +30,8 @@ export interface Arrival { track: Track; finalFrame(): FinalFrame | null }
  *   chegada (nome em marfim) → a luz passa para trás (letras escuras, fio quente, a contraforma do D abre)
  *   → travessia (a câmera mergulha na contraforma; o mundo 01 aparece pela janela, com a borda do D no quadro).
  * A câmera mantém a janela sempre dentro do quadro: a posição da janela na tela vai monotonicamente do
- * lugar onde está no nome até o centro, enquanto o zoom (logarítmico) fecha. Nada desvia por outras letras.
+ * lugar onde está no nome até o centro, enquanto o zoom (logarítmico) fecha. Antes de a câmera avançar, os
+ * outros glifos saem de cena: durante o mergulho só o portal (o D) está no quadro.
  * O Atlas continua o mesmo movimento para a frente.
  */
 export function initArrival(opts: { onComposed: () => void }): Arrival {
@@ -131,6 +132,11 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
       t.style.stroke = `rgba(255, 217, 163, ${(0.75 * light).toFixed(3)})`;
       t.style.strokeWidth = `${(0.9 + 0.6 * smoothstep(0.5, 1, p)).toFixed(2)}px`;
     }
+    // 1b) foco no portal: antes de a câmera avançar, os outros glifos saem de cena (a luz se concentra no D).
+    //     Terminam invisíveis em p = 0,56; o zoom só começa a cortar as pontas do nome em p ≈ 0,61.
+    const focus = smoothstep(0.42, 0.56, p);
+    for (const t of fit.others) t.style.opacity = (1 - focus).toFixed(3);
+    fit.portal.style.opacity = '1';
     glow.setAttribute('opacity', (light * (1 - 0.45 * smoothstep(0.7, 1, p))).toFixed(3));
 
     // 2) a janela abre como uma fenda de luz, do centro da contraforma até a abertura inteira
@@ -145,7 +151,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     // 3) travessia: zoom em escala logarítmica (velocidade perceptual constante) com a janela SEMPRE no quadro:
     //    a posição da janela na tela vai monotonicamente de onde ela está no nome até o centro.
     //    Termina com a borda do D ainda no quadro: a janela é uma passagem, não o destino.
-    const z = easeInOutCubic(remap(p, 0.44, 1));
+    const z = easeInOutCubic(remap(p, 0.52, 1));
     const fvb = finalVB();
     const vw = logLerp(W, fvb.w, z);
     const vh = (vw * H) / W;
@@ -178,7 +184,9 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     const clone = svg.cloneNode(true) as SVGSVGElement;
     clone.querySelector('#window')?.remove();
     clone.querySelector('title')?.remove();
-    clone.querySelectorAll('text').forEach((t) => { t.style.fill = '#0b0c10'; t.style.stroke = 'rgba(255, 217, 163, 0.75)'; t.style.strokeWidth = '1.5px'; });
+    // no quadro final só o portal (o D) está em cena: o Atlas herda apenas ele
+    const texts = Array.from(clone.querySelectorAll('text'));
+    texts.forEach((t, i) => { if (fit!.texts[i] !== fit!.portal) { t.remove(); return; } t.style.opacity = '1'; t.style.fill = '#0b0c10'; t.style.stroke = 'rgba(255, 217, 163, 0.75)'; t.style.strokeWidth = '1.5px'; });
     clone.querySelector('#glow')?.setAttribute('opacity', '0.55');
     let inner = clone.innerHTML;
     for (const id of ['g-warm', 'g-sheen', 'c-window', 'c-rect', 'glow', 'name-text']) inner = inner.split(`"${id}"`).join(`"af-${id}"`).split(`#${id})`).join(`#af-${id})`);
@@ -197,7 +205,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
   function renderStatic() {
     if (!fit || currentMode() !== 'static') return;
     const wb = windowBox();
-    for (const t of fit.texts) { t.style.fill = '#f1ece2'; t.style.stroke = 'none'; }
+    for (const t of fit.texts) { t.style.fill = '#f1ece2'; t.style.stroke = 'none'; t.style.opacity = '1'; }
     clipRect.setAttribute('x', String(wb.x)); clipRect.setAttribute('y', String(wb.y));
     clipRect.setAttribute('width', String(wb.w)); clipRect.setAttribute('height', String(wb.h));
     windowImg.setAttribute('opacity', '1');

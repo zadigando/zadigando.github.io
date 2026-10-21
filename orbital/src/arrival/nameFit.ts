@@ -29,7 +29,12 @@ export interface Fit {
   size: number;
   /** qual limite definiu o corpo */
   limitedBy: 'width' | 'height';
+  /** todos os <text> visíveis (o D do portal é um elemento próprio) */
   texts: SVGTextElement[];
+  /** o glifo-janela (portal), isolado para ficar em cena sozinho durante a travessia */
+  portal: SVGTextElement;
+  /** os demais glifos, que saem de cena antes de poderem cruzar o quadro */
+  others: SVGTextElement[];
   /** caixa de tinta do bloco inteiro (unidades SVG) */
   block: Rect;
   /** caixa de tinta do glifo-janela */
@@ -113,6 +118,17 @@ export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): 
   const target = texts[o.window.line]!;
   const ch = target.textContent!.charAt(o.window.char);
   const start = target.getStartPositionOfChar(o.window.char);
+  // O glifo-janela vira um <text> próprio, na posição exata que tinha na linha; o resto da linha começa onde o
+  // caractere seguinte começava (o kerning do par fica preservado pela medição). Render idêntico, elementos separados.
+  const line = target.textContent!;
+  const portal = target.cloneNode(false) as SVGTextElement;
+  portal.textContent = ch; portal.setAttribute('x', String(start.x));
+  const rest = target.cloneNode(false) as SVGTextElement;
+  rest.textContent = line.slice(o.window.char + 1);
+  if (rest.textContent) rest.setAttribute('x', String(target.getStartPositionOfChar(o.window.char + 1).x));
+  target.replaceWith(portal); if (rest.textContent) portal.after(rest);
+  const visible = texts.flatMap((t) => (t === target ? (rest.textContent ? [portal, rest] : [portal]) : [t]));
+  const others = visible.filter((t) => t !== portal);
   const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!;
   const font = `${o.weight} ${size}px ${o.family}`;
   ctx.font = font;
@@ -158,5 +174,5 @@ export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): 
   } else {
     counter = { x: ink.x + ink.w * 0.21, y: ink.y + ink.h * 0.145, w: ink.w * 0.58, h: ink.h * 0.71 };
   }
-  return { size, limitedBy, texts, block, ink, counter, gaps };
+  return { size, limitedBy, texts: visible, portal, others, block, ink, counter, gaps };
 }

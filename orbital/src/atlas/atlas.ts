@@ -70,6 +70,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   frameSvg.setAttribute('class', 'frame'); frameSvg.setAttribute('aria-hidden', 'true');
   stage.insertBefore(frameSvg, column);
   let frame: FinalFrame | null = null;
+  let holeRect: SVGRectElement | null = null;
 
   // ----- órbita: linha, trilho tipográfico, núcleo -----
   const defs = document.createElementNS(NS, 'defs'); svg.appendChild(defs);
@@ -102,6 +103,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
     frameSvg.innerHTML = `<defs><mask id="af-hole"><rect x="${vb.x - vb.w}" y="${vb.y - vb.h}" width="${vb.w * 3}" height="${vb.h * 3}" fill="#fff"/><rect x="${hole.x}" y="${hole.y}" width="${hole.w}" height="${hole.h}" fill="#000"/></mask></defs>` +
       `<g id="af-back" mask="url(#af-hole)">${frame.svgInner.replace(/<g id="af-name-text">[\s\S]*<\/g>\s*$/, '')}</g>` +
       (frame.svgInner.match(/<g id="af-name-text">[\s\S]*<\/g>\s*$/)?.[0] ?? '');
+    holeRect = frameSvg.querySelector<SVGRectElement>('#af-hole rect:last-child');
   }
 
   const mediaOf = (w: World) => (portrait ? w.media.mobile : w.media.desktop);
@@ -185,7 +187,9 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   // ----- progresso amortecido -----
   const q = createDamped(0, 12, immediateMotion);
   track.onProgress((p) => q.set(p));
-  window.addEventListener('scroll', () => { if (track.p === 0) { lastKey = ''; render(q.value, true); } }, { passive: true });
+  // antes do início do trilho o palco fica invisível (o Arrival está por baixo); esse estado depende do scrollY,
+  // não só do progresso amortecido, então entra na chave de renderização e é reavaliado a cada rolagem
+  window.addEventListener('scroll', () => { render(q.value); }, { passive: true });
   let lastKey = '';
   let currentFocus = -1;
 
@@ -197,7 +201,9 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   }
 
   function render(p: number, force = false) {
-    const key = p.toFixed(4);
+    const motion = currentMode() === 'motion';
+    const before = window.scrollY < track.start - 0.5 && motion;
+    const key = p.toFixed(4) + (before ? 'b' : '');
     if (!force && key === lastKey) return;
     lastKey = key;
     const [s0, s1] = settleRange();
@@ -206,8 +212,6 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
     const rv = easeInOutSine(remap(rev, 0.26, 1)); // 2ª fase: a janela recua até o quadro; os outros emergem
     const f = focusAt(p);
     const near = Math.round(f);
-    const motion = currentMode() === 'motion';
-    const before = window.scrollY < track.start - 0.5 && motion;
     stage.style.opacity = before ? '0' : '1';
     stage.style.pointerEvents = before ? 'none' : '';
 
@@ -256,6 +260,9 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
       const vw = vb.w * push, vh = vb.h * push;
       const cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
       frameSvg.setAttribute('viewBox', `${cx - vw / 2} ${cy - vh / 2} ${vw} ${vh}`);
+      // o furo da máscara segue EXATAMENTE a superfície do mundo 01 na tela (não escala com o avanço da borda):
+      // nenhuma faixa escura aparece em volta da imagem enquanto a borda do D passa pelas bordas da tela
+      if (holeRect) { const kx = vw / W, ky = vh / H; holeRect.setAttribute('x', String(cx - vw / 2 + frontBox.x * kx)); holeRect.setAttribute('y', String(cy - vh / 2 + frontBox.y * ky)); holeRect.setAttribute('width', String(frontBox.w * kx)); holeRect.setAttribute('height', String(frontBox.h * ky)); }
       // a tinta das letras some primeiro (nenhuma mancha escura desliza sobre o mundo); o fio quente é o último a ir
       frameSvg.style.setProperty('--fill', (1 - smoothstep(0, 0.35, fr)).toFixed(3));
       frameSvg.style.setProperty('--line-op', (1 - smoothstep(0.35, 0.95, fr)).toFixed(3));
