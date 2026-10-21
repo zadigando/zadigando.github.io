@@ -67,7 +67,7 @@ for (const V of VIEWPORTS) {
     // o D do portal é um <text> próprio: agrupa os elementos por linha (mesma baseline) para medir a linha inteira
     const pieces = [...document.querySelectorAll('#name-text text')].map((t) => { const n = t.getNumberOfChars(); const e1 = t.getExtentOfChar(n - 1); const ls = parseFloat(t.style.letterSpacing || '0'); return { x: +t.getAttribute('x'), right: e1.x + e1.width - ls, stretch: t.style.fontStretch, ls, text: t.textContent, y: +t.getAttribute('y'), size: parseFloat(t.style.fontSize) }; });
     const texts = [...new Set(pieces.map((p) => p.y))].map((y) => { const ps = pieces.filter((p) => p.y === y); const x0 = Math.min(...ps.map((p) => p.x)), r = Math.max(...ps.map((p) => p.right)); return { w: r - x0, stretch: ps.map((p) => p.stretch).join('/'), ls: Math.max(...ps.map((p) => p.ls)).toFixed(1), text: ps.map((p) => p.text).join(''), inkRight: r, y, size: ps[0].size, pieces: ps.length }; });
-    const c = document.createElement('canvas').getContext('2d'); c.font = '800 100px Archivo'; const cap = c.measureText('H').actualBoundingBoxAscent / 100;
+    const c = document.createElement('canvas').getContext('2d'); c.font = "800 100px 'Archivo Orbital'"; const cap = c.measureText('H').actualBoundingBoxAscent / 100;
     const inkTop = texts[0].y - cap * texts[0].size, inkBottom = texts[texts.length - 1].y;
     const hint = document.querySelector('.arrival-hint').getBoundingClientRect();
     const svg = document.getElementById('name');

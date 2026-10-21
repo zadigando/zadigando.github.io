@@ -1,5 +1,5 @@
 /* Tokens exploratórios da PoC — não são o design system final. */
-@font-face { font-family: 'Archivo'; src: url('/orbital/fonts/archivo-var-latin.woff2') format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; font-display: block; }
+@font-face { font-family: 'Archivo Orbital'; src: url('/orbital/fonts/archivo-var-latin.woff2') format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; font-display: block; }
 @font-face { font-family: 'Inter'; src: url('/orbital/fonts/inter-var-latin.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: 'Fraunces'; src: url('/orbital/fonts/fraunces-italic-var-latin.woff2') format('woff2'); font-weight: 100 900; font-style: italic; font-display: swap; }
 
@@ -13,7 +13,7 @@
   --warm: #ffd9a3;
   --warm-2: #ffb870;
 
-  --font-display: 'Archivo', 'Inter', system-ui, sans-serif;
+  --font-display: 'Archivo Orbital', 'Archivo', 'Inter', system-ui, sans-serif;
   --font-ui: 'Inter', system-ui, sans-serif;
   --font-voice: 'Fraunces', Georgia, serif;
 

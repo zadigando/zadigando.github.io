@@ -142,8 +142,9 @@ export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): 
     w: (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) * kx,
     h: m.actualBoundingBoxAscent + m.actualBoundingBoxDescent,
   };
-  // Contraforma medida no raster do próprio glifo (não por proporção fixa): varre a linha média e a coluna
-  // central do D e encontra o vão entre a haste e o bojo. Em escala reduzida para custar pouco.
+  // Contraforma medida no raster do próprio glifo (não por proporção fixa): varre linha a linha e encontra o vão
+  // entre a haste e o bojo. Em escala reduzida para custar pouco. (Primeira aproximação, síncrona, via canvas;
+  // `refineCounter` refaz a medição a partir da renderização SVG real.)
   const S = 256 / Math.max(ink.w, ink.h);
   const cw = Math.ceil(ink.w * S) + 4, chh = Math.ceil(ink.h * S) + 4;
   const c2 = document.createElement('canvas'); c2.width = cw; c2.height = chh;
@@ -154,25 +155,67 @@ export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): 
   g.save(); g.scale(kx, 1);
   g.fillText(ch, (m.actualBoundingBoxLeft * S * kx + 2) / kx, m.actualBoundingBoxAscent * S + 2);
   g.restore();
-  const px = g.getImageData(0, 0, cw, chh).data;
+  const measured = counterFromRaster(g.getImageData(0, 0, cw, chh).data, cw, chh, (rx, ry) => [ink.x + (rx - 2) / S, ink.y + (ry - 2) / S]) ?? { ink, counter: { x: ink.x + ink.w * 0.21, y: ink.y + ink.h * 0.145, w: ink.w * 0.58, h: ink.h * 0.71 }, gaps: [] };
+  return { size, limitedBy, texts: visible, portal, others, block, ink: measured.ink, counter: measured.counter, gaps: measured.gaps };
+}
+
+/** Caixa de tinta, vãos linha a linha e contraforma a partir de um raster (alfa > 128), já convertidos a unidades SVG. */
+function counterFromRaster(px: Uint8ClampedArray, cw: number, chh: number, toUnits: (rx: number, ry: number) => [number, number]): { ink: Rect; counter: Rect; gaps: Fit['gaps'] } | null {
   const on = (x: number, y: number) => px[(y * cw + x) * 4 + 3]! > 128;
+  let x0 = cw, x1 = -1, y0 = chh, y1 = -1;
+  for (let y = 0; y < chh; y++) for (let x = 0; x < cw; x++) if (on(x, y)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return null;
+  const [ix, iy] = toUnits(x0, y0), [jx, jy] = toUnits(x1 + 1, y1 + 1);
+  const ink: Rect = { x: ix, y: iy, w: jx - ix, h: jy - iy };
   const gapRow = (y: number): [number, number] | null => {
-    let x = 0; while (x < cw && !on(x, y)) x++; while (x < cw && on(x, y)) x++; const a = x; while (x < cw && !on(x, y)) x++;
-    return x < cw && x > a ? [a, x] : null;
+    let x = x0; while (x <= x1 && !on(x, y)) x++; while (x <= x1 && on(x, y)) x++; const a = x; while (x <= x1 && !on(x, y)) x++;
+    return x <= x1 && x > a ? [a, x] : null;
   };
   const gaps: Fit['gaps'] = [];
-  for (let yy = 2; yy < chh - 2; yy += 2) {
+  for (let yy = y0; yy <= y1; yy += 2) {
     const r = gapRow(yy);
-    if (r) gaps.push({ y: ink.y + (yy - 2) / S, x0: ink.x + (r[0] - 2) / S, x1: ink.x + (r[1] - 2) / S });
+    if (r) { const [gx0, gy] = toUnits(r[0], yy); const [gx1] = toUnits(r[1], yy); gaps.push({ y: gy, x0: gx0, x1: gx1 }); }
   }
-  let counter: Rect;
   const mid = gaps.filter((g) => g.y > ink.y + ink.h * 0.3 && g.y < ink.y + ink.h * 0.7);
-  if (mid.length) {
-    const x0 = Math.max(...mid.map((g) => g.x0)), x1 = Math.min(...mid.map((g) => g.x1));
-    const y0 = gaps[0]!.y, y1 = gaps[gaps.length - 1]!.y + 2 / S;
-    counter = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
-  } else {
-    counter = { x: ink.x + ink.w * 0.21, y: ink.y + ink.h * 0.145, w: ink.w * 0.58, h: ink.h * 0.71 };
-  }
-  return { size, limitedBy, texts: visible, portal, others, block, ink, counter, gaps };
+  if (!mid.length || gaps.length < 4) return null;
+  const cx0 = Math.max(...mid.map((g) => g.x0)), cx1 = Math.min(...mid.map((g) => g.x1));
+  const [, rowH] = toUnits(0, 2); const [, row0] = toUnits(0, 0);
+  const counter: Rect = { x: cx0, y: gaps[0]!.y, w: cx1 - cx0, h: gaps[gaps.length - 1]!.y + (rowH - row0) - gaps[0]!.y };
+  return { ink, counter, gaps };
+}
+
+let fontDataCache: Promise<string> | null = null;
+/** A webfont em base64 (uma vez), para embutir num SVG-imagem: dentro dele nenhuma fonte instalada pode interferir. */
+function fontData(url: string): Promise<string> {
+  fontDataCache ??= fetch(url).then((r) => r.arrayBuffer()).then((buf) => { let s = ''; const b = new Uint8Array(buf); for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(s); });
+  return fontDataCache;
+}
+
+/**
+ * Mede de novo a contraforma a partir da RENDERIZAÇÃO SVG real do glifo: o mesmo <text>, com a mesma fonte
+ * (embutida) e o mesmo eixo de largura, rasterizado pelo motor SVG do navegador — não pelo canvas de texto, cuja
+ * resolução de fontes pode divergir (fontes locais homônimas, eixos). Garante que a janela cai onde o D está.
+ */
+export async function refineCounter(f: Fit, o: FitOptions, fontUrl: string): Promise<Fit | null> {
+  try {
+    const portal = f.portal, ch = portal.textContent!, size = f.size;
+    const ext = portal.getExtentOfChar(0);
+    const S = 256 / Math.max(ext.width, ext.height);
+    const pad = Math.ceil(0.12 * size * S);
+    const cw = Math.ceil(ext.width * S) + pad * 2, chh = Math.ceil(ext.height * S) + pad * 2;
+    const baseline = (+portal.getAttribute('y')! - ext.y) * S + pad;
+    const data = await fontData(fontUrl);
+    const stretch = portal.style.fontStretch || '100%';
+    const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${cw}" height="${chh}"><style>@font-face{font-family:'ZdbRaster';src:url(data:font/woff2;base64,${data}) format('woff2');font-weight:100 900;font-stretch:62% 125%}</style><text x="${pad}" y="${baseline.toFixed(2)}" style="font-family:'ZdbRaster';font-weight:${o.weight};font-size:${(size * S).toFixed(2)}px;font-stretch:${stretch};letter-spacing:0" fill="#fff">${ch}</text></svg>`;
+    const img = new Image();
+    await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(new Error('svg raster')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr); });
+    const c = document.createElement('canvas'); c.width = cw; c.height = chh;
+    const g = c.getContext('2d', { willReadFrequently: true })!;
+    g.drawImage(img, 0, 0);
+    const r = counterFromRaster(g.getImageData(0, 0, cw, chh).data, cw, chh, (rx, ry) => [ext.x + (rx - pad) / S, +portal.getAttribute('y')! + (ry - baseline) / S]);
+    if (!r) return null;
+    // sanidade: a tinta medida tem de caber (com folga) na caixa de avanço do glifo real
+    if (r.ink.w < ext.width * 0.5 || r.ink.w > ext.width * 1.3) return null;
+    return { ...f, ink: r.ink, counter: r.counter, gaps: r.gaps };
+  } catch { return null; }
 }

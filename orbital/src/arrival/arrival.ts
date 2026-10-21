@@ -1,4 +1,4 @@
-import { fitName, type Fit } from './nameFit';
+import { fitName, refineCounter, type Fit, type FitOptions } from './nameFit';
 import { createTrack, type Track } from '../core/track';
 import { createDamped } from '../core/raf';
 import { currentMode, immediateMotion, isPortraitLayout, onMode } from '../core/capabilities';
@@ -8,6 +8,9 @@ import { worlds } from '../content/worlds';
 const BONE = hex('#f1ece2');
 const INK = hex('#0b0c10');
 const HEADER_H = 72;
+/** nome ÚNICO da família: nenhuma fonte instalada com o nome "Archivo" pode substituir a webfont (nem no canvas) */
+const FONT_FAMILY = 'Archivo Orbital';
+const FONT_URL = '/orbital/fonts/archivo-var-latin.woff2';
 /** No fim da travessia a borda do D continua visível: o quadro é um múltiplo da janela, nunca mais largo que o D. */
 const RIM = { landscape: 1.42, portrait: 1.5 };
 
@@ -87,28 +90,58 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
       : { top: HEADER_H + H * 0.045, bottom: H - Math.max(44, H * 0.07) };
     // telas mais altas que largas (telefone e tablet em pé) compõem em três linhas; as demais em duas
     const tall = portrait || H > W;
-    fit = fitName(svg, group, {
+    const fo: FitOptions = {
       lines: tall ? ['ZADIG', 'DE', 'BEM'] : ['ZADIG', 'DE BEM'],
       width: W, gutter: portrait ? 20 : Math.max(32, W * 0.034),
       fill: portrait ? 1 : 0.94,
       band, bias: tall ? 0.4 : 0.47,
       lineHeight: tall ? 0.88 : 0.86,
-      minStretch: 62, maxStretch: 125, maxTracking: 0.04, weight: 800, family: 'Archivo',
+      minStretch: 62, maxStretch: 125, maxTracking: 0.04, weight: 800, family: FONT_FAMILY,
       window: { line: 1, char: 0 },
+    };
+    fit = fitName(svg, group, fo);
+    svg.dataset.limit = fit.limitedBy; svg.dataset.size = String(Math.round(fit.size)); svg.dataset.counter = 'canvas';
+    // medição definitiva a partir da renderização SVG real (assíncrona, curta): recompõe a janela se mudar
+    const mine = fit;
+    void refineCounter(mine, fo, FONT_URL).then((refined) => {
+      if (!refined || fit !== mine) return;
+      fit = refined; svg.dataset.counter = 'svg';
+      placeWindow(); computeFinalBox(); lastKey = ''; render(progress.value, true); renderStatic(); drawDebug(); opts.onComposed();
     });
-    svg.dataset.limit = fit.limitedBy; svg.dataset.size = String(Math.round(fit.size));
-    const { counter } = fit;
     const media = portrait ? first.media.mobile : first.media.desktop;
     windowImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', media.poster);
-    const ccx = counter.x + counter.w / 2, ccy = counter.y + counter.h / 2;
-    glow.setAttribute('cx', String(ccx)); glow.setAttribute('cy', String(ccy));
-    gwarm.setAttribute('cx', String(ccx)); gwarm.setAttribute('cy', String(ccy));
-    const gr = Math.max(W, H) * 0.5; glow.setAttribute('r', String(gr)); gwarm.setAttribute('r', String(gr));
+    placeWindow();
     computeFinalBox();
     lastKey = '';
     render(progress.value, true);
     renderStatic();
+    drawDebug();
     opts.onComposed();
+  }
+  /** luz e brilho centrados na contraforma medida */
+  function placeWindow() {
+    const { counter } = fit!;
+    const ccx = counter.x + counter.w / 2, ccy = counter.y + counter.h / 2;
+    glow.setAttribute('cx', String(ccx)); glow.setAttribute('cy', String(ccy));
+    gwarm.setAttribute('cx', String(ccx)); gwarm.setAttribute('cy', String(ccy));
+    const gr = Math.max(W, H) * 0.5; glow.setAttribute('r', String(gr)); gwarm.setAttribute('r', String(gr));
+  }
+  /** `?debug=portal`: desenha a caixa de tinta do D (vermelho), a contraforma medida (verde) e a janela (ciano). */
+  const DEBUG = new URLSearchParams(location.search).get('debug') === 'portal';
+  function drawDebug() {
+    if (!DEBUG || !fit) return;
+    group.querySelectorAll('.dbg').forEach((e) => e.remove());
+    const wb = windowBox();
+    for (const [r, c] of [[fit.ink, '#ff3b3b'], [fit.counter, '#3bff6a'], [wb, '#3be0ff']] as const) {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      el.setAttribute('class', 'dbg'); el.setAttribute('x', String(r.x)); el.setAttribute('y', String(r.y)); el.setAttribute('width', String(r.w)); el.setAttribute('height', String(r.h));
+      el.setAttribute('fill', 'none'); el.setAttribute('stroke', c); el.setAttribute('stroke-width', '1.2'); el.setAttribute('vector-effect', 'non-scaling-stroke');
+      group.appendChild(el);
+    }
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text'); t.setAttribute('class', 'dbg'); t.setAttribute('x', String(fit.ink.x)); t.setAttribute('y', String(fit.ink.y - 6));
+    t.setAttribute('fill', '#3bff6a'); t.setAttribute('font-size', String(Math.max(8, fit.size * 0.05))); t.setAttribute('font-family', 'monospace'); t.setAttribute('style', 'font-family: monospace; font-weight: 400; letter-spacing: 0; stroke: none; fill: #3bff6a');
+    t.textContent = `contraforma: ${svg.dataset.counter} · ${navigator.userAgent.match(/(Chrome|Safari|Firefox)\/[\d.]+/)?.[0] ?? ''} · ${W}×${H}`;
+    group.appendChild(t);
   }
 
   // amortecimento leve sobre o progresso do scroll (a pose continua função pura do progresso)
@@ -196,7 +229,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
   // recomposição: fontes prontas, redimensionamento, mudança de modo
   let raf = 0;
   const recompose = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { compose(); track.measure(); }); };
-  document.fonts.load('800 100px Archivo').then(recompose, recompose);
+  document.fonts.load(`800 100px '${FONT_FAMILY}'`).then(recompose, recompose);
   window.addEventListener('resize', recompose);
   onMode(() => { lastKey = ''; recompose(); });
 
