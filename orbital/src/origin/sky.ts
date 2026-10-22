@@ -1,4 +1,5 @@
-import { clamp, hex, lerp, mix, type Box, type RGB } from '../core/math';
+import { clamp, hex, lerp, logLerp, mix, remap, type Box, type RGB } from '../core/math';
+export { logLerp };
 import { ANTARES, LINES, SCORPIUS_CENTER, STARS } from '../content/scorpius';
 
 /**
@@ -70,3 +71,51 @@ export function segmentDepths(lines: ReadonlyArray<[number, number]> = LINES, fr
   }
   return lines.map(([p, q]) => Math.min(dist.get(p) ?? 99, dist.get(q) ?? 99));
 }
+
+// ===== Study 02 — a viagem pelo corpo: polilinha real, estações e câmera (puro) =====
+export interface Camera { cx: number; cy: number; z: number }
+const easeInOutQuart = (t: number): number => (t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2);
+
+/** Comprimentos acumulados de uma polilinha (pontos em px). */
+export function arcLengths(path: ReadonlyArray<[number, number]>): number[] {
+  const acc = [0];
+  for (let i = 1; i < path.length; i++) acc.push(acc[i - 1]! + Math.hypot(path[i]![0] - path[i - 1]![0], path[i]![1] - path[i - 1]![1]));
+  return acc;
+}
+/** Ponto da polilinha à distância `s` do início (limitado às pontas). */
+export function pointAtArc(path: ReadonlyArray<[number, number]>, acc: readonly number[], s: number): [number, number] {
+  const total = acc[acc.length - 1]!;
+  const d = clamp(s, 0, total);
+  let i = 1; while (i < acc.length - 1 && acc[i]! < d) i++;
+  const a = path[i - 1]!, b = path[i]!, seg = acc[i]! - acc[i - 1]!;
+  const t = seg > 0 ? (d - acc[i - 1]!) / seg : 0;
+  return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
+}
+
+/** Ritmo da viagem: n marcos depois do primeiro, cada um com trajeto `T` e platô `P` (frações de 0..1); o resto é o recuo final. */
+export interface Rhythm { n: number; T: number; P: number }
+export const RHYTHM: Rhythm = { n: 5, T: 42 / 480, P: 40 / 480 };
+export const travelStart = (k: number, r: Rhythm = RHYTHM): number => (k - 1) * (r.T + r.P);
+export const plateauCenter = (k: number, r: Rhythm = RHYTHM): number => (k === 0 ? 0 : travelStart(k, r) + r.T + r.P / 2);
+export const journeyEnd = (r: Rhythm = RHYTHM): number => r.n * (r.T + r.P);
+/** foco contínuo 0..n: inteiro nos platôs, easeInOutQuart nos trajetos (o mesmo ritmo do Atlas) */
+export function journeyFocus(j: number, r: Rhythm = RHYTHM): number {
+  let f = 0;
+  for (let k = 1; k <= r.n; k++) f += easeInOutQuart(remap(j, travelStart(k, r), travelStart(k, r) + r.T));
+  return f;
+}
+/** recuo final 0..1 depois do último platô */
+export const pullBack = (j: number, r: Rhythm = RHYTHM): number => remap(j, journeyEnd(r), 1);
+
+/** Centro da câmera (coordenadas da carta) que põe `star` na fração `frame` do palco com zoom `z`. */
+export function cameraFor(star: [number, number], frame: [number, number], z: number, W: number, H: number): Camera {
+  return { cx: star[0] - ((frame[0] - 0.5) * W) / z, cy: star[1] - ((frame[1] - 0.5) * H) / z, z };
+}
+/** Transformação SVG do grupo da carta para uma câmera (o palco é W×H). Fator < 1 = camada mais distante (paralaxe). */
+export function cameraTransform(c: Camera, W: number, H: number, depth = 1): string {
+  const cx = lerp(W / 2, c.cx, depth), cy = lerp(H / 2, c.cy, depth), z = 1 + (c.z - 1) * lerp(1, depth, 0.6);
+  return `translate(${(W / 2 - cx * z).toFixed(2)} ${(H / 2 - cy * z).toFixed(2)}) scale(${z.toFixed(4)})`;
+}
+/** Posição no palco de um ponto da carta sob a câmera. */
+export const toStage = (c: Camera, p: [number, number], W: number, H: number): [number, number] => [W / 2 + (p[0] - c.cx) * c.z, H / 2 + (p[1] - c.cy) * c.z];
+

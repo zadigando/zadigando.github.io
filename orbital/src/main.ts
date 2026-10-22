@@ -7,6 +7,7 @@ import { initOrigin } from './origin/origin';
 import { initWorld } from './world/world';
 import { plateauCenter } from './atlas/orbit';
 import { worldById } from './content/worlds';
+import { milestoneByYear } from './content/milestones';
 import { SCENES } from './config';
 import type { Lang } from './content/strings';
 
@@ -31,7 +32,8 @@ installTracks();
 function positionFor(hash: string): number | null {
   if (hash === '#arrival') return arrival!.track.start;
   if (hash === '#atlas') return atlas.track.scrollYFor(0.25);
-  if (hash === '#origin') return origin.track.scrollYFor(0.97);
+  if (hash === '#origin') return origin.positionFor(0);
+  { const m = /^#origin-(\d{4})$/.exec(hash); if (m) { const k = milestoneByYear(m[1]!); if (k >= 0) return origin.positionFor(k); } }
   if (!SCENES) { const m = /^#mundo-([a-z]+)$/.exec(hash); const w = m ? worldById(m[1]!) : undefined; if (w) return atlas.track.scrollYFor(plateauCenter(w.index - 1)); }
   return null;
 }
@@ -44,7 +46,7 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   if (location.hash !== hash) history.pushState(null, '', hash);
   window.scrollTo({ top: y, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-  if (hash === '#atlas' || hash === '#origin') (document.getElementById(hash.slice(1)) as HTMLElement).focus({ preventScroll: true });
+  if (hash === '#atlas' || hash.startsWith('#origin')) (document.getElementById(hash === '#atlas' ? 'atlas' : 'origin') as HTMLElement).focus({ preventScroll: true });
 });
 // (na navegação pelo histórico o navegador também rola até o fragmento DEPOIS do evento: aplica-se em dois quadros)
 window.addEventListener('popstate', () => { const y = positionFor(location.hash); if (y !== null && currentMode() === 'motion') requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'auto' }))); });

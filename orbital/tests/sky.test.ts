@@ -49,3 +49,41 @@ describe('carta de Escorpião (posições reais, projeção pura)', () => {
     expect(binOpacity(6, limitAt(1))).toBe(1);
   });
 });
+
+import { arcLengths, cameraFor, cameraTransform, journeyEnd, journeyFocus, plateauCenter, pointAtArc, pullBack, RHYTHM, toStage, travelStart } from '../src/origin/sky';
+import { BODY_PATH, milestoneByYear, milestones } from '../src/content/milestones';
+
+describe('a viagem pelo corpo (Estudo 02, puro)', () => {
+  it('a polilinha do corpo liga estrelas existentes e o ponto por distância cai sobre ela', () => {
+    for (const i of BODY_PATH) expect(STARS[i]).toBeDefined();
+    const path: Array<[number, number]> = [[0, 0], [10, 0], [10, 10]];
+    const acc = arcLengths(path);
+    expect(acc).toEqual([0, 10, 20]);
+    expect(pointAtArc(path, acc, 5)).toEqual([5, 0]);
+    expect(pointAtArc(path, acc, 15)).toEqual([10, 5]);
+    expect(pointAtArc(path, acc, 99)).toEqual([10, 10]);
+  });
+  it('o foco é contínuo, monotônico, inteiro nos platôs, e os platôs cabem antes do recuo final', () => {
+    let last = -1;
+    for (let j = 0; j <= 1.0001; j += 0.0005) { const f = journeyFocus(j); expect(f).toBeGreaterThanOrEqual(last - 1e-9); last = f; }
+    for (let k = 1; k <= RHYTHM.n; k++) { expect(journeyFocus(plateauCenter(k))).toBeCloseTo(k, 6); expect(plateauCenter(k)).toBeGreaterThan(travelStart(k)); }
+    expect(journeyEnd()).toBeLessThan(1); expect(journeyEnd()).toBeGreaterThan(0.8);
+    expect(pullBack(journeyEnd())).toBe(0); expect(pullBack(1)).toBe(1);
+  });
+  it('a câmera põe a estrela na fração pedida do palco, e a camada distante se move menos (paralaxe)', () => {
+    const W = 1440, H = 692; const star: [number, number] = [900, 300];
+    const c = cameraFor(star, [0.66, 0.45], 2, W, H);
+    const [sx, sy] = toStage(c, star, W, H);
+    expect(sx).toBeCloseTo(0.66 * W, 6); expect(sy).toBeCloseTo(0.45 * H, 6);
+    const near = cameraTransform(c, W, H, 1), far = cameraTransform(c, W, H, 0.78);
+    const tx = (s: string) => Number(/translate\(([-\d.]+)/.exec(s)![1]);
+    expect(Math.abs(tx(far))).toBeLessThan(Math.abs(tx(near)));
+  });
+  it('os marcos apontam para estrelas reais, 2020 é Antares e os anos resolvem o marco certo', () => {
+    expect(milestones).toHaveLength(6);
+    expect(milestones[0]!.stars).toEqual([ANTARES]);
+    for (const m of milestones) for (const i of m.stars) expect(STARS[i]).toBeDefined();
+    expect(milestoneByYear('2023')).toBe(2); expect(milestoneByYear('2026')).toBe(5); expect(milestoneByYear('1999')).toBe(-1);
+    for (const m of milestones) expect(m.zoom).toBeLessThanOrEqual(2.4);
+  });
+});

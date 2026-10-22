@@ -49,7 +49,7 @@ const segs = onlyOrigin ? [{ dur: 1, from: T.origin.start, to: T.origin.start },
   { dur: 0.8, from: T.arrival.end, to: T.arrival.end },
   { dur: 14, from: T.atlas.start, to: T.atlas.end, e: (t) => t },
   { dur: 1.5, from: T.atlas.end, to: T.atlas.end },
-  ...originSegs(12),
+  ...originSegs(20),
   { dur: 4, from: T.origin.start, to: 0, e: easeIO },
   { dur: 1, from: 0, to: 0 },
 ];

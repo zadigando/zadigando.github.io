@@ -188,6 +188,17 @@ A projeção (`src/origin/sky.ts`) é estereográfica; a rotação da carta é a
 entre estrelas e acontecimentos profissionais são simbólicas. Nenhuma legenda técnica aparece na composição: o
 crédito fica aqui e no cabeçalho do módulo de dados.
 
+## The Origin · Estudo 02 — a viagem pelo corpo de Escorpião
+
+Depois do marco de 2020 (Antares), a câmera (translate + scale de um único grupo SVG da carta) caminha sobre a
+polilinha real do corpo da constelação — α τ ε μ ζ η θ ι κ λ — e para em cinco estações: 2021 em ε Larawag,
+2022–2023 no par μ¹ Xamidimura / μ² Pipirima, 2024 em θ Sargas, 2025 em κ Sco e 2026 no ferrão λ Shaula / υ Lesath.
+Cada estação enquadra a estrela no terço oposto à coluna editorial (zoom 1,6–2,1); entre estações o ritmo é o do
+Atlas (easeInOutQuart). Estrelas e nomes mantêm o tamanho em px de tela; o campo de estrelas fracas é uma camada
+mais distante (paralaxe). No fim, recuo até a figura inteira, sem textos. Marcos em `src/content/milestones.ts`
+(os textos apoiam-se só nas experiências documentadas pelo autor; a associação com as estrelas é simbólica);
+geometria pura e testada em `src/origin/sky.ts`. Atalhos: `#origin-2021` … `#origin-2026`, setas e teclas 1–6.
+
 ## Limitações conhecidas
 
 - Verificação em Chromium headless; Safari/Firefox e aparelhos físicos ainda não testados por aqui.

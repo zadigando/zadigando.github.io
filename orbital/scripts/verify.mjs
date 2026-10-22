@@ -43,7 +43,20 @@ const watch = (page, label) => {
 const tracks = (page) => page.evaluate(() => {
   // os trilhos publicam início/fim (o Atlas tem uma cauda em que o palco continua fixo depois de p = 1)
   const m = (id) => { const el = document.getElementById(id); const st = el.querySelector('.stage'); const top = el.getBoundingClientRect().top + scrollY; return { start: el.dataset.trackStart ? +el.dataset.trackStart : top, end: el.dataset.trackEnd ? +el.dataset.trackEnd : top + el.offsetHeight - st.offsetHeight }; };
-  return { arrival: m('arrival'), atlas: m('atlas'), origin: m('origin') };
+  const os = document.querySelector('#origin .stage');
+  return { arrival: m('arrival'), atlas: m('atlas'), origin: { ...m('origin'), s1: +os.dataset.s1, stations: JSON.parse(os.dataset.stations), jEnd: +os.dataset.journeyEnd } };
+});
+/** estado da viagem (Estudo 02) no quadro atual */
+const journeyState = (page) => page.evaluate(() => {
+  const st = document.querySelector('#origin .stage'); const sb = st.getBoundingClientRect();
+  const col = document.getElementById('origin-column'); const cb = col.getBoundingClientRect();
+  const rings = [...document.querySelectorAll('.sky-rings circle')].filter((c) => +c.style.opacity > 0.5).map((c) => { const r = c.getBoundingClientRect(); return { x: r.x + r.width / 2 - sb.left, y: r.y + r.height / 2 - sb.top, star: +c.dataset.star }; });
+  const labelsOn = [...document.querySelectorAll('.sky-labels text')].filter((t) => +t.style.opacity > 0.5).map((t) => { const r = t.getBoundingClientRect(); return { text: t.textContent, left: r.left - sb.left, right: r.right - sb.left, top: r.top - sb.top, bottom: r.bottom - sb.top }; });
+  const figStars = [...document.querySelectorAll('.sky-figstars circle')].map((c) => { const r = c.getBoundingClientRect(); return { x: r.x + r.width / 2 - sb.left, y: r.y + r.height / 2 - sb.top }; });
+  const inView = figStars.filter((p) => p.x > 0 && p.x < sb.width && p.y > 0 && p.y < sb.height).length;
+  return { j: +st.dataset.j, z: +st.dataset.z, f: +st.dataset.focus, W: sb.width, H: sb.height, colOp: +getComputedStyle(col).opacity, col: { left: cb.left - sb.left, top: cb.top - sb.top, right: cb.right - sb.left, bottom: cb.bottom - sb.top },
+    title: document.getElementById('origin-title').textContent, year: col.querySelector('.column-index b').textContent, rings, labelsOn, inView,
+    idx: [...document.querySelectorAll('#origin-index .index-btn')].findIndex((b) => b.getAttribute('aria-current') === 'true'), leaderOp: +document.querySelector('.sky-leader').style.opacity, nav: document.querySelector('.hdr nav a[aria-current="true"]')?.dataset.chapter ?? '' };
 });
 const rmseOf = (a, b) => { writeFileSync('/tmp/_cmp_a.png', a); writeFileSync('/tmp/_cmp_b.png', b); try { execFileSync('compare', ['-metric', 'RMSE', '/tmp/_cmp_a.png', '/tmp/_cmp_b.png', 'null:']); return 0; } catch (e) { const m = /\(([\d.e-]+)\)/.exec(String(e.stderr)); return m ? Number(m[1]) : 1; } };
 /** estado do The Origin e da saída do Atlas no quadro atual */
@@ -61,7 +74,7 @@ const originState = (page) => page.evaluate(() => {
   return { e: +st.dataset.e, stageOp: st.style.opacity, W: sb.width, H: sb.height, frontRight: fr.right - sb.left, frontOp: +front.style.opacity, colOp: +getComputedStyle(col).opacity, strips,
     tint: +getComputedStyle(document.querySelector('#atlas .stage')).getPropertyValue('--tint-on'), orbitGone: parseFloat(line.style.strokeDashoffset) >= parseFloat(line.style.strokeDasharray) * 0.98,
     core: { x: +core.getAttribute('cx'), y: +core.getAttribute('cy'), op: +core.style.opacity }, dot: { x: +dot.getAttribute('cx'), y: +dot.getAttribute('cy') },
-    visibleStars, drawn, total: segs.length, labelsOp: +document.querySelector('.sky-labels').style.opacity, cards,
+    visibleStars, drawn, total: segs.length, labelsOp: Math.max(0, ...[...document.querySelectorAll('.sky-labels text')].map((t) => +t.style.opacity || 0)), cards,
     ocolOp: +getComputedStyle(ocol).opacity, ocol: { top: ob.top - sb.top, right: ob.right - sb.left, bottom: ob.bottom - sb.top, left: ob.left - sb.left }, fig: { x: fig.x, y: fig.y, r: fig.x + fig.width, b: fig.y + fig.height },
     year: ocol.querySelector('.column-index b').textContent, title: document.getElementById('origin-title').textContent, navCurrent: document.querySelector('.hdr nav a[aria-current="true"]')?.dataset.chapter ?? '' };
 });
@@ -179,7 +192,7 @@ for (const V of VIEWPORTS) {
 
   // 6b) The Origin · Estudo 01: a saída do Atlas, a chegada a Escorpião e o marco de 2020 — tudo função do scroll
   {
-    const E = (e) => T.origin.start + e * (T.origin.end - T.origin.start);
+    const E = (e) => T.origin.start + e * T.origin.s1 * (T.origin.end - T.origin.start); // progresso do Estudo 01
     // costura: último quadro do Atlas (cauda, p = 1) == primeiro do Origin (e = 0)
     await go(page, T.origin.start - 2, 1000); const sa = await page.screenshot();
     await go(page, T.origin.start + 2, 1000); const sb = await page.screenshot();
@@ -215,6 +228,45 @@ for (const V of VIEWPORTS) {
     check(`${V.name} · origin · setas não devolvem ao Atlas`, Math.abs((await page.evaluate(() => scrollY)) - yBefore) < 2);
   }
 
+  // 6c) The Origin · Estudo 02: a viagem pelo corpo de Escorpião, de 2020 a 2026
+  {
+    const P = (p) => T.origin.start + p * (T.origin.end - T.origin.start);
+    const S = T.origin.stations; // posições (progresso do trilho) dos platôs 2020..2026
+    const YEARS = ['2020', '2021', '2022–2023', '2024', '2025', '2026'];
+    const inside = (r, m = 0) => r.x >= m && r.x <= r.W - m && r.y >= HEADER + 8 && r.y <= r.H - 8;
+    const overlaps = (a, b, pad = 8) => a.left < b.right + pad && a.right > b.left - pad && a.top < b.bottom + pad && a.bottom > b.top - pad;
+    let zMax = 0, minView = 99;
+    for (let k = 1; k < S.length; k++) {
+      await go(page, P(S[k]), 1000); const s = await journeyState(page);
+      zMax = Math.max(zMax, s.z); minView = Math.min(minView, s.inView);
+      const stars = s.rings.length;
+      const ringsOk = stars >= 1 && s.rings.every((r) => inside({ ...r, W: s.W, H: s.H }, s.W * 0.06) && !(r.x > s.col.left - 8 && r.x < s.col.right + 8 && r.y > s.col.top - 8 && r.y < s.col.bottom + 8));
+      const labelsOk = s.labelsOn.length >= 1 && s.labelsOn.length <= 4 && s.labelsOn.every((l) => l.left >= 4 && l.right <= s.W - 4 && l.top >= HEADER - 2 && !overlaps(l, s.col, 4));
+      const colOk = s.colOp >= 0.98 && s.col.left >= 0 && s.col.right <= s.W + 0.5 && s.col.top >= HEADER && s.col.bottom <= s.H;
+      check(`${V.name} · origin · marco ${YEARS[k]} no platô: coluna visível e inteira, estrela(s) anelada(s) no quadro e fora da coluna, nomes inteiros`, s.year === YEARS[k] && s.idx === k && s.nav === 'origin' && colOk && ringsOk && labelsOk && Math.abs(s.f - k) < 0.02, `ano=${s.year} idx=${s.idx} f=${s.f} z=${s.z} anéis=${JSON.stringify(s.rings.map((r) => [Math.round(r.x), Math.round(r.y)]))} nomes=${s.labelsOn.map((l) => l.text).join('|')} coluna=${Math.round(s.col.left)},${Math.round(s.col.top)}→${Math.round(s.col.right)},${Math.round(s.col.bottom)} vistas=${s.inView}`);
+      if (V.shots) await page.screenshot({ path: join(evidence, `${V.name}__origin-${YEARS[k].slice(0, 4)}.png`) });
+      // meio do trajeto seguinte: a câmera caminha (foco fracionário), a figura continua em cena (orientação)
+      if (k < S.length - 1) { await go(page, P((S[k] + S[k + 1]) / 2), 900); const m = await journeyState(page); minView = Math.min(minView, m.inView); check(`${V.name} · origin · trajeto ${YEARS[k]} → ${YEARS[k + 1]}: câmera a caminho, figura em cena`, m.f > k + 0.2 && m.f < k + 0.8 && m.inView >= 6, `f=${m.f} vistas=${m.inView}`); }
+    }
+    check(`${V.name} · origin · zoom contido (≤ 2,4) e sempre com estrelas da figura em cena (≥ 6)`, zMax <= 2.4 && minView >= 6, `zmax=${zMax} mínimo em cena=${minView}`);
+    // recuo final: a figura inteira, sem textos, linhas ou anéis
+    await go(page, P(1), 1000); const fin = await journeyState(page);
+    check(`${V.name} · origin · encerramento: Escorpião inteiro, limpo (sem coluna, nomes, linhas ou anéis)`, Math.abs(fin.z - 1) < 0.01 && fin.colOp <= 0.02 && fin.leaderOp === 0 && fin.labelsOn.length === 0 && fin.rings.length === 0 && fin.inView >= 17, `z=${fin.z} coluna=${fin.colOp} nomes=${fin.labelsOn.length} anéis=${fin.rings.length} vistas=${fin.inView}`);
+    if (V.shots) await page.screenshot({ path: join(evidence, `${V.name}__origin-fim.png`) });
+    // reversível: o mesmo quadro de trajeto vindo de cima e vindo de baixo
+    const mid = P((S[2] + S[3]) / 2);
+    await go(page, P(S[1]), 700); await go(page, mid, 1000); const ra = await page.screenshot();
+    await go(page, P(S[4]), 700); await go(page, mid, 1000); const rb = await page.screenshot();
+    const rev = rmseOf(ra, rb);
+    check(`${V.name} · origin · viagem reversível (mesmo quadro ao descer e ao subir)`, rev < 0.01, `RMSE ${rev}`);
+    // teclado: seta → leva ao marco seguinte; tecla 1 leva a 2020
+    await go(page, P(S[2]), 800); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(1800);
+    const afterArrow = await journeyState(page);
+    await page.keyboard.press('1'); await page.waitForTimeout(1800);
+    const afterOne = await page.evaluate(() => ({ e: +document.querySelector('#origin .stage').dataset.e, j: +document.querySelector('#origin .stage').dataset.j }));
+    check(`${V.name} · origin · seta → vai ao marco seguinte; tecla 1 volta a 2020`, afterArrow.idx === 3 && Math.abs(afterArrow.f - 3) < 0.02 && afterOne.j === 0 && afterOne.e >= 0.9, `idx=${afterArrow.idx} f=${afterArrow.f} depois: e=${afterOne.e} j=${afterOne.j}`);
+  }
+
   // 7) link direto por hash leva ao platô do mundo (histórico/retorno nativos)
   const p2 = await ctx.newPage(); watch(p2, V.name + ' hash');
   await p2.goto(BASE + '#mundo-rlg', { waitUntil: 'load' }); await p2.waitForTimeout(1400);
@@ -223,6 +275,9 @@ for (const V of VIEWPORTS) {
   await p2.goto(BASE + '#origin', { waitUntil: 'load' }); await p2.waitForTimeout(1600);
   const deepO = await p2.evaluate(() => ({ e: +document.querySelector('#origin .stage').dataset.e, col: +getComputedStyle(document.getElementById('origin-column')).opacity, nav: document.querySelector('.hdr nav a[aria-current="true"]')?.dataset.chapter }));
   check(`${V.name} · #origin leva direto à constelação com o marco de 2020`, deepO.e >= 0.9 && deepO.col >= 0.9 && deepO.nav === 'origin', JSON.stringify(deepO));
+  await p2.goto(BASE + '#origin-2024', { waitUntil: 'load' }); await p2.waitForTimeout(1600);
+  const deep24 = await p2.evaluate(() => ({ f: +document.querySelector('#origin .stage').dataset.focus, title: document.getElementById('origin-title').textContent, col: +getComputedStyle(document.getElementById('origin-column')).opacity }));
+  check(`${V.name} · #origin-2024 leva direto ao marco de 2024`, Math.abs(deep24.f - 3) < 0.02 && deep24.title === 'Construir do zero' && deep24.col >= 0.9, JSON.stringify(deep24));
   await p2.close();
   await ctx.close();
 }
@@ -232,7 +287,7 @@ for (const V of VIEWPORTS) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'en-US' });
   const page = await ctx.newPage(); watch(page, 'en');
   await page.goto(BASE, { waitUntil: 'load' }); await page.waitForTimeout(400);
-  check('EN · The Origin traduzido (menu, marco, carta)', await page.evaluate(() => document.querySelector('[data-i18n="navOrigin"]').textContent === 'Origin' && document.getElementById('origin-title').textContent === 'The history of the internet' && document.getElementById('sky-title').textContent === 'The constellation Scorpius' && !document.getElementById('sky-caption')));
+  check('EN · The Origin traduzido (menu, marco, carta)', await page.evaluate(() => document.querySelector('[data-i18n="navOrigin"]').textContent === 'Origin' && document.getElementById('origin-title').textContent === 'The Story of the Internet' && document.getElementById('sky-title').textContent === 'The constellation Scorpius' && !document.getElementById('sky-caption')));
   check('EN · detecção por navegador', await page.evaluate(() => document.documentElement.lang === 'en' && document.querySelector('[data-i18n="arrivalHint"]').textContent === 'Scroll to cross' && document.getElementById('visit').textContent.includes('Visit site')));
   await page.click('[data-lang="pt"]'); await page.waitForTimeout(200);
   check('PT · troca persiste', await page.evaluate(() => document.documentElement.lang === 'pt-BR' && localStorage.getItem('zdb-orbital-lang') === 'pt'));
@@ -247,8 +302,8 @@ for (const V of VIEWPORTS) {
   await page.goto(BASE, { waitUntil: 'load' }); await page.waitForTimeout(600);
   const st = await page.evaluate(() => ({ mode: document.documentElement.dataset.mode, stageSticky: getComputedStyle(document.querySelector('#atlas .stage')).position, surfaces: document.querySelectorAll('.surface').length, links: [...document.querySelectorAll('.surface')].every((s) => /^https?:/.test(s.href)) }));
   check('reduced-motion · modo estático automático, palcos no fluxo, 4 superfícies-link', st.mode === 'static' && st.stageSticky === 'static' && st.surfaces === 4 && st.links, JSON.stringify(st));
-  const so = await page.evaluate(() => ({ sticky: getComputedStyle(document.querySelector('#origin .stage')).position, stars: document.querySelectorAll('.sky-field circle').length, drawn: [...document.querySelectorAll('.sky-figure line')].every((l) => Math.abs(parseFloat(l.style.strokeDashoffset)) < 0.5), col: +getComputedStyle(document.getElementById('origin-column')).opacity, skyH: document.getElementById('sky').getBoundingClientRect().height }));
-  check('reduced-motion · The Origin estático: carta completa, figura traçada, marco visível', so.sticky === 'static' && so.stars >= 400 && so.drawn && so.col >= 0.98 && so.skyH > 200, JSON.stringify(so));
+  const so = await page.evaluate(() => ({ sticky: getComputedStyle(document.querySelector('#origin .stage')).position, stars: document.querySelectorAll('.sky-field circle, .sky-figstars circle').length, drawn: [...document.querySelectorAll('.sky-figure line')].every((l) => Math.abs(parseFloat(l.style.strokeDashoffset)) < 0.5), list: document.querySelectorAll('#origin-list li').length, colHidden: getComputedStyle(document.getElementById('origin-column')).display === 'none', skyH: document.getElementById('sky').getBoundingClientRect().height }));
+  check('reduced-motion · The Origin estático: carta completa, figura traçada, os seis marcos em lista', so.sticky === 'static' && so.stars >= 400 && so.drawn && so.list === 6 && so.colHidden && so.skyH > 200, JSON.stringify(so));
   await page.evaluate(() => document.getElementById('origin').scrollIntoView()); await page.waitForTimeout(300);
   await page.screenshot({ path: join(evidence, 'desktop-1440x900__static-origin.png') });
   await page.screenshot({ path: join(evidence, 'desktop-1440x900__static-top.png') });

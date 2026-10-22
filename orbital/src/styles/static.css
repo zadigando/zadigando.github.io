@@ -20,8 +20,10 @@ html[data-mode='static'] .column > * { opacity: 1; }
 html[data-mode='static'] .index { position: static; opacity: 1 !important; }
 html[data-mode='static'] .track--origin .stage { padding: 64px var(--gutter) 64px; display: grid; gap: 28px; }
 html[data-mode='static'] .sky { position: relative; width: 100%; height: auto; }
-html[data-mode='static'] .column--origin { opacity: 1 !important; }
+html[data-mode='static'] .column--origin, html[data-mode='static'] .index--origin, html[data-mode='static'] .sky-leader { display: none; }
 html[data-mode='static'] .numeral--origin { display: none; }
+html[data-mode='static'] .origin-list { display: grid; gap: 36px; margin: 0; padding: 0; list-style: none; max-width: 560px; }
+html[data-mode='static'] .origin-list .column-title { font-size: clamp(30px, 3.4vw, 44px); margin-top: 10px; }
 html[data-mode='static'] .hdr { background: rgba(7, 8, 11, 0.85); }
 html[data-mode='static'] .cta, html[data-mode='static'] .link, html[data-mode='static'] .surface-media { transition: none !important; }
 
