@@ -11,7 +11,6 @@
 .sky-labels .sky-bayer { text-transform: none; font-family: var(--font-voice); font-style: italic; font-size: 12px; letter-spacing: 0.08em; }
 .sky-core { fill: var(--warm); }
 .sky-core-glow { fill: url(#g-warm-sky); }
-.sky-caption { position: absolute; right: var(--gutter); bottom: 36px; z-index: 3; max-width: 46ch; text-align: right; opacity: 0; }
 
 .column--origin { opacity: 0; }
 .column--origin .column-index span { margin-left: 10px; }
@@ -20,7 +19,6 @@
 .numeral--origin { opacity: 0; }
 
 @media (max-width: 720px) {
-  .sky-caption { right: auto; left: var(--gutter); bottom: 24px; text-align: left; max-width: calc(100vw - 2 * var(--gutter)); font-size: 9px; }
   .column--origin { bottom: 64px; }
   .column--origin .column-thesis { display: block; max-width: 34ch; }
   .sky-labels text { font-size: 9.5px; }

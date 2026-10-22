@@ -20,7 +20,6 @@ html[data-mode='static'] .column > * { opacity: 1; }
 html[data-mode='static'] .index { position: static; opacity: 1 !important; }
 html[data-mode='static'] .track--origin .stage { padding: 64px var(--gutter) 64px; display: grid; gap: 28px; }
 html[data-mode='static'] .sky { position: relative; width: 100%; height: auto; }
-html[data-mode='static'] .sky-caption { position: static; opacity: 1 !important; text-align: left; max-width: none; }
 html[data-mode='static'] .column--origin { opacity: 1 !important; }
 html[data-mode='static'] .numeral--origin { display: none; }
 html[data-mode='static'] .hdr { background: rgba(7, 8, 11, 0.85); }

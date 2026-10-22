@@ -232,7 +232,7 @@ for (const V of VIEWPORTS) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'en-US' });
   const page = await ctx.newPage(); watch(page, 'en');
   await page.goto(BASE, { waitUntil: 'load' }); await page.waitForTimeout(400);
-  check('EN · The Origin traduzido (menu, marco, carta)', await page.evaluate(() => document.querySelector('[data-i18n="navOrigin"]').textContent === 'Origin' && document.getElementById('origin-title').textContent === 'The history of the internet' && /Scorpius/.test(document.getElementById('sky-caption').textContent) && document.getElementById('sky-title').textContent === 'The constellation Scorpius'));
+  check('EN · The Origin traduzido (menu, marco, carta)', await page.evaluate(() => document.querySelector('[data-i18n="navOrigin"]').textContent === 'Origin' && document.getElementById('origin-title').textContent === 'The history of the internet' && document.getElementById('sky-title').textContent === 'The constellation Scorpius' && !document.getElementById('sky-caption')));
   check('EN · detecção por navegador', await page.evaluate(() => document.documentElement.lang === 'en' && document.querySelector('[data-i18n="arrivalHint"]').textContent === 'Scroll to cross' && document.getElementById('visit').textContent.includes('Visit site')));
   await page.click('[data-lang="pt"]'); await page.waitForTimeout(200);
   check('PT · troca persiste', await page.evaluate(() => document.documentElement.lang === 'pt-BR' && localStorage.getItem('zdb-orbital-lang') === 'pt'));

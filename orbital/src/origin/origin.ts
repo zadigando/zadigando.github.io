@@ -2,7 +2,7 @@ import { createTrack, type Track } from '../core/track';
 import { createDamped } from '../core/raf';
 import { currentMode, immediateMotion, isPortraitLayout, onMode } from '../core/capabilities';
 import { easeInOutCubic, easeInOutSine, lerp, remap, smoothstep, type Box } from '../core/math';
-import { onLang, t } from '../core/i18n';
+import { onLang } from '../core/i18n';
 import { ANTARES, FIGURE, LINES, STARS } from '../content/scorpius';
 import { binOpacity, fitFigure, limitAt, projectAll, segmentDepths, starAlpha, starColor, starRadius, toScreen, type Chart } from './sky';
 import { stageLayout } from '../atlas/stageLayout';
@@ -21,7 +21,7 @@ export interface Origin { track: Track; relayout(): void }
  *   e 0,30–0,42  o vislumbre do quadro se apaga na borda esquerda: só o núcleo e o escuro
  *   e 0,40–0,72  o campo estelar surge por magnitude (as brilhantes primeiro, como a vista se adaptando ao escuro)
  *   e 0,56–0,80  a figura de Escorpião se traça a partir do coração, nas duas direções
- *   e 0,78–0,88  nomes (Antares, Shaula, Dschubba) e a legenda da carta
+ *   e 0,78–0,88  nomes (Antares, Shaula, Dschubba)
  *   e 0,82–0,96  o primeiro marco: 2020, como descoberta editorial na coluna (o mesmo lugar da coluna do Atlas)
  * Tudo é função pura do scroll: subir desfaz exatamente o que descer fez.
  */
@@ -31,7 +31,6 @@ export function initOrigin(atlas: Atlas): Origin {
   const svg = document.getElementById('sky') as unknown as SVGSVGElement;
   const column = document.getElementById('origin-column')!;
   const numeral = document.getElementById('origin-numeral')!;
-  const caption = document.getElementById('sky-caption')!;
 
   // ----- céu: estrelas por faixa de magnitude, traços da figura, nomes, núcleo, linha de chamada -----
   const field = document.createElementNS(NS, 'g'); field.setAttribute('class', 'sky-field'); svg.appendChild(field);
@@ -151,10 +150,9 @@ export function initOrigin(atlas: Atlas): Origin {
     const draw = smoothstep(0.56, 0.8, e);
     segs.forEach((l, k) => { const d = depths[k]!; const s = remap(draw, d / maxDepth, (d + 1) / maxDepth); l.style.strokeDashoffset = `${(segLen[k]! * (1 - s)).toFixed(1)}`; l.style.opacity = s > 0 ? '1' : '0'; });
 
-    // 4) nomes e legenda
+    // 4) nomes
     const named = smoothstep(0.78, 0.88, e);
     labels.style.opacity = named.toFixed(3);
-    caption.style.opacity = named.toFixed(3);
 
     // 5) o marco de 2020
     const mark = smoothstep(0.84, 0.96, e);
@@ -175,7 +173,6 @@ export function initOrigin(atlas: Atlas): Origin {
   onMode((m) => { if (m === 'static') q.jump(1); relayout(); });
   track.measure();
   layout();
-  caption.textContent = t('skyCaption');
 
   return { track, relayout };
 }

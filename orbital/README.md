@@ -179,6 +179,15 @@ Da PoC anterior (`/poc/`, 3D, preservada fora do repositório): o padrão de pal
 scroll nativo, a navegação por âncoras no palco, as capacidades, o dicionário de i18n e o harness de verificação,
 portados de hooks React para módulos TypeScript puros.
 
+## Dados astronômicos (The Origin)
+
+A carta de Escorpião usa posições reais: HYG Database v3.8 (David Nash, astronexus.com — derivada dos catálogos
+Hipparcos, Yale BSC5 e Gliese), licença CC BY-SA 4.0. O módulo `src/content/scorpius.ts` guarda 512 estrelas da
+região (magnitude ≤ 6,0, coordenadas J2000, magnitude e índice de cor B−V) e a figura clássica de 17 estrelas.
+A projeção (`src/origin/sky.ts`) é estereográfica; a rotação da carta é a única escolha artística. As associações
+entre estrelas e acontecimentos profissionais são simbólicas. Nenhuma legenda técnica aparece na composição: o
+crédito fica aqui e no cabeçalho do módulo de dados.
+
 ## Limitações conhecidas
 
 - Verificação em Chromium headless; Safari/Firefox e aparelhos físicos ainda não testados por aqui.
