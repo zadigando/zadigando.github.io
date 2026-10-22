@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="/src/styles/base.css">
   <link rel="stylesheet" href="/src/styles/arrival.css">
   <link rel="stylesheet" href="/src/styles/atlas.css">
+  <link rel="stylesheet" href="/src/styles/origin.css">
   <link rel="stylesheet" href="/src/styles/world.css">
   <link rel="stylesheet" href="/src/styles/static.css">
 </head>
@@ -25,6 +26,7 @@
     <a class="brand meta" href="#arrival"><b data-i18n="brand">Zadig de Bem</b><span class="role" data-i18n="role">Creative Developer</span></a>
     <nav class="meta" aria-label="Capítulos">
       <a href="#atlas" data-i18n="navWorlds" data-chapter="atlas">Mundos</a>
+      <a href="#origin" data-i18n="navOrigin" data-chapter="origin">Origem</a>
       <a href="#connection" data-i18n="navContact" data-chapter="connection">Contato</a>
     </nav>
     <div class="tools">
@@ -84,6 +86,31 @@
           </div>
         </div>
         <nav class="index" id="index" data-i18n-attr="aria-label:atlasOrbitLabel"></nav>
+      </div>
+    </section>
+
+    <!-- ===== Capítulo 03 · The Origin · Estudo 01 (Escorpião) ===== -->
+    <section id="origin" class="track track--origin" aria-labelledby="origin-title" tabindex="-1">
+      <div class="stage">
+        <div class="numeral numeral--origin" id="origin-numeral" aria-hidden="true"><span>2020</span></div>
+        <svg class="sky" id="sky" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="sky-title sky-desc">
+          <title id="sky-title" data-i18n="skyTitle">Constelação de Escorpião</title>
+          <desc id="sky-desc" data-i18n="skyDesc"></desc>
+          <defs>
+            <radialGradient id="g-warm-sky">
+              <stop offset="0" stop-color="#ffd9a3" stop-opacity="0.55"/>
+              <stop offset="0.35" stop-color="#ffb870" stop-opacity="0.16"/>
+              <stop offset="1" stop-color="#ffb870" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+        </svg>
+        <div class="column column--origin" id="origin-column">
+          <p class="meta column-index"><b>2020</b><span data-i18n="originMark">primeiro marco</span><span class="column-star">· Antares</span></p>
+          <h2 class="column-title" id="origin-title" data-i18n="originTitle">A história da internet</h2>
+          <p class="column-cat" data-i18n="originCat"></p>
+          <p class="column-thesis" data-i18n="originThesis"></p>
+        </div>
+        <p class="sky-caption meta" id="sky-caption"></p>
       </div>
     </section>
 

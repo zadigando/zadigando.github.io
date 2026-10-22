@@ -22,7 +22,9 @@ export interface Track {
 const tracks: Track[] = [];
 let scheduled = false;
 
-export function createTrack(id: string): Track {
+/** `tail`: palcos (múltiplos da altura do palco) em que o palco continua fixo DEPOIS de p = 1 — o capítulo seguinte
+ *  se sobrepõe a ele nesse trecho (margem negativa) e coreografa a saída deste. */
+export function createTrack(id: string, opts: { tail?: number } = {}): Track {
   const el = document.getElementById(id);
   const stage = el?.querySelector<HTMLElement>('.stage');
   if (!el || !stage) throw new Error(`track ${id} não encontrado`);
@@ -34,7 +36,9 @@ export function createTrack(id: string): Track {
     measure() {
       const top = el.getBoundingClientRect().top + window.scrollY;
       t.start = top;
-      t.end = Math.max(top + 1, top + el.offsetHeight - stage.offsetHeight);
+      const tail = (opts.tail ?? 0) * stage.offsetHeight;
+      t.end = Math.max(top + 1, top + el.offsetHeight - stage.offsetHeight - tail);
+      el.dataset.trackStart = t.start.toFixed(1); el.dataset.trackEnd = t.end.toFixed(1);
       update(t, true);
     },
   };

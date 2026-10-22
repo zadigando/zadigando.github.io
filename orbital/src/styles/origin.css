@@ -1,0 +1,27 @@
+/* ===== Capítulo 03 · The Origin · Estudo 01 (a transição para Escorpião) ===== */
+.track--origin { height: 520vh; height: 520svh; }
+/* o palco é transparente: por baixo, o palco do Atlas (ainda fixo durante a saída) e depois o fundo da página */
+.track--origin .stage { background: transparent; }
+
+.sky { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; overflow: visible; }
+.sky-field circle { transition: none; }
+.sky-figure line { fill: none; stroke: rgba(255, 217, 163, 0.55); stroke-width: 1; stroke-linecap: round; }
+.sky-leader { fill: none; stroke: rgba(255, 217, 163, 0.34); stroke-width: 1; stroke-dasharray: 1; }
+.sky-labels text { font-family: var(--font-ui); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; fill: var(--mute); font-weight: 500; }
+.sky-labels .sky-bayer { text-transform: none; font-family: var(--font-voice); font-style: italic; font-size: 12px; letter-spacing: 0.08em; }
+.sky-core { fill: var(--warm); }
+.sky-core-glow { fill: url(#g-warm-sky); }
+.sky-caption { position: absolute; right: var(--gutter); bottom: 36px; z-index: 3; max-width: 46ch; text-align: right; opacity: 0; }
+
+.column--origin { opacity: 0; }
+.column--origin .column-index span { margin-left: 10px; }
+.column--origin .column-star { color: var(--warm); }
+.column--origin .column-cat { color: color-mix(in srgb, var(--warm) 55%, var(--bone)); }
+.numeral--origin { opacity: 0; }
+
+@media (max-width: 720px) {
+  .sky-caption { right: auto; left: var(--gutter); bottom: 24px; text-align: left; max-width: calc(100vw - 2 * var(--gutter)); font-size: 9px; }
+  .column--origin { bottom: 64px; }
+  .column--origin .column-thesis { display: block; max-width: 34ch; }
+  .sky-labels text { font-size: 9.5px; }
+}

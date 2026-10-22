@@ -19,6 +19,10 @@ export interface Atlas {
   focused(): number;
   surfaceEl(i: number): HTMLElement;
   relayout(): void;
+  /** saída para The Origin (0..1): as frestas somem, a curadoria recua para a esquerda, o sistema orbital se dissipa */
+  setExit(e: number): void;
+  /** posição (px do palco) do núcleo "Zadig de Bem" na órbita — de onde o capítulo seguinte o leva */
+  corePoint(): { x: number; y: number; visible: boolean };
 }
 
 /**
@@ -30,7 +34,7 @@ export interface Atlas {
  * Entre mundos: a fresta da direita abre até virar o quadro; o quadro fecha até virar a fresta de baixo.
  */
 export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getFrame: () => FinalFrame | null): Atlas {
-  const track = createTrack('atlas');
+  const track = createTrack('atlas', { tail: 2 }); // dois palcos de cauda: The Origin se sobrepõe e coreografa a saída
   const stage = track.stage;
   const svg = document.getElementById('orbit') as unknown as SVGSVGElement;
   const surfacesEl = document.getElementById('surfaces')!;
@@ -178,6 +182,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   window.addEventListener('scroll', () => { render(q.value); }, { passive: true });
   let lastKey = '';
   let currentFocus = -1;
+  let exit = 0;
 
   function placeMedia(i: number, box: Box, focal: [number, number]) {
     const m = mediaOf(worlds[i]!);
@@ -189,7 +194,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   function render(p: number, force = false) {
     const motion = currentMode() === 'motion';
     const before = window.scrollY < track.start - 0.5 && motion;
-    const key = p.toFixed(4) + (before ? 'b' : '');
+    const key = p.toFixed(4) + (before ? 'b' : '') + exit.toFixed(3);
     if (!force && key === lastKey) return;
     lastKey = key;
     const [s0, s1] = settleRange();
@@ -202,6 +207,11 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
 
     const win = frame ? frame.window : L.front;
     let frontBox: Box = L.front;
+    // saída para The Origin: as frestas somem primeiro; a curadoria recua para a esquerda na MESMA escala até o quadro
+    // virar um vislumbre na borda (a linguagem das frestas), que depois se apaga; o sistema orbital se dissipa
+    const slide = easeInOutSine(remap(exit, 0.04, 0.34));
+    const shift = -(L.front.x + L.front.w * 0.72) * slide;
+    const dissolve = 1 - smoothstep(0.08, 0.36, exit);
     for (let i = 0; i < worlds.length; i++) {
       const s = surfaces[i]!;
       const off = angleOf({ cx: 0, cy: 0, rx: 1, ry: 1, tilt: 0, front: 0 }, i, f); // deslocamento angular (0 = frente)
@@ -224,41 +234,46 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
           op *= e;
         }
       }
+      if (exit > 0) op *= i === near ? 1 - smoothstep(0.3, 0.42, exit) : 1 - smoothstep(0, 0.12, exit);
       s.style.transform = `translate(${box.x.toFixed(1)}px, ${box.y.toFixed(1)}px)`;
       s.style.width = `${box.w.toFixed(1)}px`; s.style.height = `${box.h.toFixed(1)}px`;
       s.style.borderRadius = `${radius.toFixed(1)}px`;
       s.style.opacity = op.toFixed(3);
+      s.style.pointerEvents = op < 0.05 ? 'none' : '';
       s.style.zIndex = String(10 + Math.round(d * 10) + (i === 0 && rev < 1 ? 5 : 0));
       s.style.setProperty('--depth', d.toFixed(3));
       s.style.setProperty('--ap', ap.toFixed(3));
       s.style.filter = ap > 0.98 ? 'none' : `brightness(${lerp(0.5, 1, ap).toFixed(3)}) saturate(${lerp(0.75, 1, ap).toFixed(3)})`;
       s.dataset.front = String(Math.abs(i - f) < 0.5);
       s.dataset.strip = String(ap < 0.35);
-      s.tabIndex = Math.abs(i - f) < 0.5 ? 0 : -1;
+      s.tabIndex = Math.abs(i - f) < 0.5 && exit < 0.4 ? 0 : -1;
       placeMedia(i, box, focal);
     }
-    syncVideo(rev >= 0.6 && Math.abs(f - near) < 0.3 ? near : -1);
+    surfacesEl.style.transform = shift ? `translateX(${shift.toFixed(1)}px)` : '';
+    syncVideo(rev >= 0.6 && Math.abs(f - near) < 0.3 && exit < 0.3 ? near : -1);
 
     // a luz do mundo tinge o palco à medida que o sistema se revela (no instante da costura o fundo é o mesmo do Arrival)
-    stage.style.setProperty('--tint-on', smoothstep(0.02, 0.4, rev).toFixed(3));
+    stage.style.setProperty('--tint-on', (smoothstep(0.02, 0.4, rev) * (1 - smoothstep(0.06, 0.4, exit))).toFixed(3));
 
     // órbita, núcleo, numeral, coluna
-    const sys = smoothstep(0.18, 0.95, rev);
+    const sys = smoothstep(0.18, 0.95, rev) * dissolve;
     line.style.strokeDashoffset = `${railLen * (1 - sys)}`;
     tp.setAttribute('startOffset', `${((f * 25 + 62) % 100).toFixed(2)}%`);
     const late = smoothstep(0.5, 0.95, rev);
-    railText.style.opacity = late.toFixed(3);
-    core.style.opacity = late.toFixed(3); coreDot.style.opacity = late.toFixed(3);
-    column.style.opacity = late.toFixed(3);
-    column.style.transform = `translateY(${((1 - late) * 24).toFixed(1)}px)`;
+    railText.style.opacity = (late * (1 - smoothstep(0.04, 0.2, exit))).toFixed(3);
+    // o núcleo permanece: o rótulo se apaga, o ponto passa a ser desenhado pelo capítulo seguinte (mesmas coordenadas)
+    core.style.opacity = (late * (1 - smoothstep(0.1, 0.22, exit))).toFixed(3); coreDot.style.opacity = exit > 0.001 ? '0' : late.toFixed(3);
+    // a coluna recua JUNTO com o quadro (mesma escala, mesmo deslocamento) e só se apaga ao sair da tela
+    column.style.opacity = (late * (1 - smoothstep(0.16, 0.32, exit))).toFixed(3);
+    column.style.transform = `translate(${shift.toFixed(1)}px, ${((1 - late) * 24).toFixed(1)}px)`;
     const tr = Math.abs(f - near); // 0 no platô, 0.5 no meio da transição
     const cut = 1 - smoothstep(0.16, 0.5, tr);
     column.style.setProperty('--cut', cut.toFixed(3));
-    numeral.style.opacity = (late * 0.9).toFixed(3);
+    numeral.style.opacity = (late * 0.9 * (1 - smoothstep(0.12, 0.34, exit))).toFixed(3);
     numeral.style.setProperty('--cut', cut.toFixed(3));
-    numeral.style.transform = `translateX(${(-(f - near) * 40).toFixed(1)}px)`;
+    numeral.style.transform = `translateX(${(-(f - near) * 40 + shift * 0.35).toFixed(1)}px)`;
     if (near !== currentFocus) { currentFocus = near; fillColumn(worlds[near]!); }
-    indexEl.style.opacity = late.toFixed(3);
+    indexEl.style.opacity = (late * (1 - smoothstep(0.02, 0.14, exit))).toFixed(3);
   }
   q.subscribe((v) => render(v));
 
@@ -296,7 +311,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   enterBtn.addEventListener('click', () => onEnter(worlds[focused()]!, surfaces[focused()]!));
   document.addEventListener('keydown', (e) => {
     if ((e.target as HTMLElement)?.closest('input, textarea, [role="dialog"]')) return;
-    const inAtlas = window.scrollY >= track.start - H * 0.5 && window.scrollY <= track.end + H * 0.5;
+    const inAtlas = window.scrollY >= track.start - H * 0.5 && window.scrollY <= track.end; // depois do fim, The Origin: rolagem nativa
     if (!inAtlas) return;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goTo(focused() + 1); }
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(focused() - 1); }
@@ -329,5 +344,7 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
   fillColumn(worlds[0]!);
   document.documentElement.lang = getLang() === 'pt' ? 'pt-BR' : 'en';
 
-  return { track, goTo, focused, surfaceEl: (i) => surfaces[i]!, relayout, frontRect: () => surfaces[focused()]?.getBoundingClientRect() ?? null };
+  function setExit(e: number) { const v = clamp(e); if (v === exit) return; exit = v; lastKey = ''; render(q.value, true); }
+  const corePoint = () => ({ x: +coreDot.getAttribute('cx')!, y: +coreDot.getAttribute('cy')!, visible: !portrait && core.style.visibility !== 'hidden' });
+  return { track, goTo, focused, surfaceEl: (i) => surfaces[i]!, relayout, frontRect: () => surfaces[focused()]?.getBoundingClientRect() ?? null, setExit, corePoint };
 }

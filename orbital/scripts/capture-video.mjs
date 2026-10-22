@@ -1,7 +1,8 @@
 // Vídeo QUADRO A QUADRO da experiência (sobre o build em dist/): cada quadro = rolagem nativa até uma
 // posição → espera o amortecimento convergir → screenshot. Mostra composição e continuidade reais;
 // o ritmo é o da montagem (não mede fluidez de GPU).
-// uso: node scripts/capture-video.mjs <saída.mp4> [desktop|mac|mobile] [fps]   (mac = 1440×692, viewport de MacBook com a barra do navegador)
+// uso: node scripts/capture-video.mjs <saída.mp4> [desktop|mac|mobile] [fps] [origin:<segundos>]
+//   (mac = 1440×692, viewport de MacBook com a barra do navegador · origin:40 = só a transição Atlas → Origin, ida em 40 s e volta)
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -12,6 +13,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = process.argv[2] || join(root, 'evidence', 'video', 'orbital.mp4');
 const fmt = process.argv[3] || 'desktop';
 const FPS = Number(process.argv[4] || 24);
+const onlyOrigin = /^origin:/.test(process.argv[5] || '') ? Number(process.argv[5].slice(7)) : 0;
 const F = { desktop: { width: 1440, height: 900, dpr: 1, mobile: false }, mac: { width: 1440, height: 692, dpr: 1, mobile: false }, mobile: { width: 390, height: 844, dpr: 2, mobile: true } }[fmt];
 if (!F) { console.error('formato desconhecido:', fmt); process.exit(2); }
 const frames = out.replace(/\.mp4$/, '') + '-frames';
@@ -28,19 +30,27 @@ page.on('pageerror', (e) => errors.push(e.message)); page.on('console', (m) => m
 await page.goto(`http://127.0.0.1:${PORT}/orbital/`, { waitUntil: 'load' });
 await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(600);
 const T = await page.evaluate(() => {
-  const m = (id) => { const el = document.getElementById(id); const st = el.querySelector('.stage'); const top = el.getBoundingClientRect().top + scrollY; return { start: top, end: top + el.offsetHeight - st.offsetHeight }; };
-  return { arrival: m('arrival'), atlas: m('atlas') };
+  const m = (id) => { const el = document.getElementById(id); const st = el.querySelector('.stage'); const top = el.getBoundingClientRect().top + scrollY; return { start: el.dataset.trackStart ? +el.dataset.trackStart : top, end: el.dataset.trackEnd ? +el.dataset.trackEnd : top + el.offsetHeight - st.offsetHeight }; };
+  return { arrival: m('arrival'), atlas: m('atlas'), origin: m('origin') };
 });
 // Roteiro (segundos): parada no topo → travessia (ida) → assentamento e os 4 mundos → parada → volta rápida ao topo
 const easeIO = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const ease = (t) => 0.5 * t + 0.5 * easeIO(t);
-const segs = [
+// The Origin: ida (velocidade normal 12 s; ou a pedida), parada, volta (validação da transição reversa)
+const originSegs = (dur) => [
+  { dur, from: T.origin.start, to: T.origin.end, e: (t) => t },
+  { dur: 1.5, from: T.origin.end, to: T.origin.end },
+  { dur: dur * 0.5, from: T.origin.end, to: T.origin.start, e: (t) => t },
+  { dur: 1, from: T.origin.start, to: T.origin.start },
+];
+const segs = onlyOrigin ? [{ dur: 1, from: T.origin.start, to: T.origin.start }, ...originSegs(onlyOrigin)] : [
   { dur: 1.2, from: 0, to: 0 },
   { dur: 9, from: 0, to: T.arrival.end, e: ease },
   { dur: 0.8, from: T.arrival.end, to: T.arrival.end },
   { dur: 14, from: T.atlas.start, to: T.atlas.end, e: (t) => t },
   { dur: 1.5, from: T.atlas.end, to: T.atlas.end },
-  { dur: 4, from: T.atlas.end, to: 0, e: easeIO },
+  ...originSegs(12),
+  { dur: 4, from: T.origin.start, to: 0, e: easeIO },
   { dur: 1, from: 0, to: 0 },
 ];
 const plan = [];

@@ -1,6 +1,6 @@
 /* ===== Capítulo 02 · The Orbital Atlas ===== */
 @property --tint { syntax: '<color>'; inherits: true; initial-value: #d9c9a3; }
-.track--atlas { height: 720vh; height: 720svh; }
+.track--atlas { height: 920vh; height: 920svh; } /* 720 de trajeto + 200 de cauda (a saída, coreografada por The Origin) */
 .track--atlas .stage { --mx: 0; --my: 0; --tint: #d9c9a3; background: var(--void); transition: --tint 0.7s var(--ease-in-out); }
 /* a luz do mundo em foco tinge o palco (a cor vem do próprio site) */
 .track--atlas .stage::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: var(--tint-on, 1);

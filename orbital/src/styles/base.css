@@ -61,6 +61,8 @@ img, video { display: block; max-width: 100%; }
 .track { position: relative; }
 .track--arrival { z-index: 2; }
 .track--atlas { z-index: 3; margin-top: -100vh; margin-top: -100svh; }
+/* The Origin cobre a cauda do Atlas (dois palcos depois de p = 1) e coreografa a saída dele */
+.track--origin { z-index: 4; margin-top: -300vh; margin-top: -300svh; }
 .stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
 
 /* ===== rodapé mínimo da PoC ===== */
