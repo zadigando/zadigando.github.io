@@ -52,6 +52,9 @@ const frameState = (page) => page.evaluate(() => {
   const cx = c.x.baseVal.value + c.width.baseVal.value / 2, cy = c.y.baseVal.value + c.height.baseVal.value / 2;
   const letters = []; let ghosts = 0;
   for (const t of document.querySelectorAll('#name-text text')) { const cs = getComputedStyle(t); const op = parseFloat(cs.opacity) * Math.max(parseFloat(cs.fillOpacity), parseFloat(cs.strokeOpacity)); for (let i = 0; i < t.getNumberOfChars(); i++) { const e = t.getExtentOfChar(i); if (t.textContent[i] !== ' ' && e.x < vb.x + vb.width && e.x + e.width > vb.x && e.y < vb.y + vb.height && e.y + e.height > vb.y) { if (op > 0.02) letters.push(t.textContent[i]); else ghosts++; } } }
+  // o D como caminho vetorial (em cena durante o mergulho) conta como a letra D
+  const pp = document.getElementById('portal-path');
+  if (pp && pp.getAttribute('d')) { const cs = getComputedStyle(pp); const op = parseFloat(cs.opacity) * Math.max(parseFloat(cs.fillOpacity), parseFloat(cs.strokeOpacity)); const bb = pp.getBBox(); if (bb.x < vb.x + vb.width && bb.x + bb.width > vb.x && bb.y < vb.y + vb.height && bb.y + bb.height > vb.y) { if (op > 0.02) letters.push('D'); else ghosts++; } }
   return { ghosts, p: +svg.dataset.p, z: +svg.dataset.z, fx: (cx - vb.x) / vb.width, fy: (cy - vb.y) / vb.height, left: (c.x.baseVal.value - vb.x) / vb.width, right: (c.x.baseVal.value + c.width.baseVal.value - vb.x) / vb.width, top: (c.y.baseVal.value - vb.y) / vb.height, bottom: (c.y.baseVal.value + c.height.baseVal.value - vb.y) / vb.height, letters: letters.join('') };
 });
 
@@ -102,6 +105,7 @@ for (const V of VIEWPORTS) {
   check(`${V.name} · janela do D sempre no quadro durante a travessia`, inside, samples.map((s) => `${s.fx.toFixed(2)},${s.fy.toFixed(2)}`).join(' '));
   check(`${V.name} · câmera caminha monotonicamente para a contraforma (sem desvio por outras letras)`, monotone, dist.map((d) => d.toFixed(2)).join(' '));
   // só o portal fica em cena enquanto a câmera avança (visibilidade real, não só posição): nenhum outro glifo visível com z > 0
+  for (const s of samples) s.letters = s.letters.replace(/D+/, 'D');
   const diving = samples.filter((s) => s.z > 0.001 && s.p <= 0.9);
   check(`${V.name} · durante o mergulho só o D está visível no quadro (outros glifos saíram de cena antes)`, diving.length >= 6 && diving.every((s) => s.letters === 'D'), diving.map((s) => `p${s.p.toFixed(2)}:${s.letters || '∅'}`).join(' '));
   // saída do portal (p 0,90 → 1): a borda do D passa pelas bordas da tela e some; no fim não resta tipografia, só a janela centrada

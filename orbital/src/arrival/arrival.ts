@@ -100,13 +100,14 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
       window: { line: 1, char: 0 },
     };
     fit = fitName(svg, group, fo);
+    buildPortalPath();
     svg.dataset.limit = fit.limitedBy; svg.dataset.size = String(Math.round(fit.size)); svg.dataset.counter = 'canvas';
     // medição definitiva a partir da renderização SVG real (assíncrona, curta): recompõe a janela se mudar
     const mine = fit;
     void refineCounter(mine, fo, FONT_URL).then((refined) => {
       if (!refined || fit !== mine) return;
       fit = refined.fit; svg.dataset.counter = refined.source; svg.dataset.advDelta = (refined.advanceDelta * 100).toFixed(1) + '%';
-      placeWindow(); computeFinalBox(); lastKey = ''; render(progress.value, true); renderStatic(); drawDebug(); opts.onComposed();
+      buildPortalPath(); placeWindow(); computeFinalBox(); lastKey = ''; render(progress.value, true); renderStatic(); drawDebug(); opts.onComposed();
     });
     const media = portrait ? first.media.mobile : first.media.desktop;
     windowImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', media.poster);
@@ -117,6 +118,36 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     renderStatic();
     drawDebug();
     opts.onComposed();
+  }
+  /**
+   * O D como CAMINHO vetorial, reconstruído linha a linha do raster do próprio glifo (contorno externo + contraforma,
+   * regra evenodd). Durante a travessia é ele que fica em cena, não o <text>: glifos de milhares de px físicos
+   * passam por limites de rasterização do navegador (Chrome em Retina encolhe o desenho e a borda invade a janela);
+   * um caminho não. Entra por crossfade no início do mergulho, quando as duas versões coincidem ao pixel.
+   */
+  const portalPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  portalPath.id = 'portal-path'; portalPath.setAttribute('fill-rule', 'evenodd'); portalPath.setAttribute('class', 'portal-path');
+  function buildPortalPath() {
+    group.appendChild(portalPath); // (fitName esvazia o grupo)
+    const rows = fit?.rows;
+    if (!rows || rows.length < 8) { portalPath.setAttribute('d', ''); svg.dataset.portal = 'text'; return; }
+    const f = (v: number) => v.toFixed(2);
+    const first = rows[0]!, last = rows[rows.length - 1]!, half = (rows[1]!.y - first.y) / 2;
+    let d = `M${f(first.xa)} ${f(first.y - half)}`;
+    for (const r of rows) d += `L${f(r.xa)} ${f(r.y)}`;
+    d += `L${f(last.xa)} ${f(last.y + half)}L${f(last.xb)} ${f(last.y + half)}`;
+    for (let i = rows.length - 1; i >= 0; i--) d += `L${f(rows[i]!.xb)} ${f(rows[i]!.y)}`;
+    d += `L${f(first.xb)} ${f(first.y - half)}Z`;
+    const hole = rows.filter((r) => r.x0 !== undefined);
+    if (hole.length > 4) {
+      const h0 = hole[0]!, h1 = hole[hole.length - 1]!;
+      d += `M${f(h0.x0!)} ${f(h0.y - half)}`;
+      for (const r of hole) d += `L${f(r.x0!)} ${f(r.y)}`;
+      d += `L${f(h1.x0!)} ${f(h1.y + half)}L${f(h1.x1!)} ${f(h1.y + half)}`;
+      for (let i = hole.length - 1; i >= 0; i--) d += `L${f(hole[i]!.x1!)} ${f(hole[i]!.y)}`;
+      d += `L${f(h0.x1!)} ${f(h0.y - half)}Z`;
+    }
+    portalPath.setAttribute('d', d); svg.dataset.portal = 'path';
   }
   /** luz e brilho centrados na contraforma medida */
   function placeWindow() {
@@ -187,7 +218,11 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     //     Terminam invisíveis em p = 0,56; o zoom só começa a cortar as pontas do nome em p ≈ 0,61.
     const focus = smoothstep(0.42, 0.56, p);
     for (const t of fit.others) t.style.opacity = (1 - focus).toFixed(3);
-    fit.portal.style.opacity = '1';
+    // 1c) o D vira caminho vetorial no início do mergulho (crossfade curto, as duas versões coincidem ao pixel)
+    const vec = portalPath.getAttribute('d') ? smoothstep(0.52, 0.57, p) : 0;
+    fit.portal.style.opacity = (1 - vec).toFixed(3);
+    portalPath.style.opacity = vec.toFixed(3);
+    portalPath.style.fill = fill; portalPath.style.stroke = fit.portal.style.stroke; portalPath.style.strokeWidth = fit.portal.style.strokeWidth;
     // 2) a janela abre como uma fenda de luz, do centro da contraforma até a abertura inteira
     const open = easeInOutSine(remap(p, 0.16, 0.46));
     const wb = windowBox();
@@ -212,8 +247,9 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     const vx = finalBox.cx - fx * vw, vy = finalBox.cy - fy * vh;
     svg.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`);
     svg.dataset.p = p.toFixed(4); svg.dataset.z = z.toFixed(4); svg.dataset.ex = ex.toFixed(4);
-    fit.portal.style.fillOpacity = (1 - smoothstep(0, 0.45, ex)).toFixed(3);
-    fit.portal.style.strokeOpacity = (1 - smoothstep(0.3, 0.85, ex)).toFixed(3);
+    const fo = (1 - smoothstep(0, 0.45, ex)).toFixed(3), so = (1 - smoothstep(0.3, 0.85, ex)).toFixed(3);
+    fit.portal.style.fillOpacity = fo; fit.portal.style.strokeOpacity = so;
+    portalPath.style.fillOpacity = fo; portalPath.style.strokeOpacity = so;
     glow.setAttribute('opacity', (light * (1 - 0.45 * smoothstep(0.7, 1, p)) * (1 - smoothstep(0.15, 0.9, ex))).toFixed(3));
 
     // a janela na saída: o mesmo retângulo de TELA (o viewBox encolhe, o retângulo em unidades encolhe junto)
@@ -259,6 +295,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     if (!fit || currentMode() !== 'static') return;
     const wb = windowBox();
     for (const t of fit.texts) { t.style.fill = '#f1ece2'; t.style.stroke = 'none'; t.style.opacity = '1'; t.style.fillOpacity = ''; t.style.strokeOpacity = ''; }
+    portalPath.style.opacity = '0';
     clipRect.setAttribute('x', String(wb.x)); clipRect.setAttribute('y', String(wb.y));
     clipRect.setAttribute('width', String(wb.w)); clipRect.setAttribute('height', String(wb.h));
     windowImg.setAttribute('opacity', '1');

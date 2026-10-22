@@ -43,6 +43,9 @@ export interface Fit {
   counter: Rect;
   /** vão medido linha a linha (unidades SVG): y, x0 (fim da haste), x1 (início do bojo) */
   gaps: Array<{ y: number; x0: number; x1: number }>;
+  /** contorno do glifo, linha a linha do raster (unidades SVG): vão externo xa..xb e, se houver, contraforma x0..x1.
+   *  Permite desenhar o D como CAMINHO vetorial (imune ao limite de rasterização de glifos gigantes). */
+  rows?: Array<{ y: number; xa: number; xb: number; x0?: number; x1?: number }>;
 }
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -145,7 +148,7 @@ export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): 
   // Contraforma medida no raster do próprio glifo (não por proporção fixa): varre linha a linha e encontra o vão
   // entre a haste e o bojo. Em escala reduzida para custar pouco. (Primeira aproximação, síncrona, via canvas;
   // `refineCounter` refaz a medição a partir da renderização SVG real.)
-  const S = 256 / Math.max(ink.w, ink.h);
+  const S = 1024 / Math.max(ink.w, ink.h);
   const cw = Math.ceil(ink.w * S) + 4, chh = Math.ceil(ink.h * S) + 4;
   const c2 = document.createElement('canvas'); c2.width = cw; c2.height = chh;
   const g = c2.getContext('2d', { willReadFrequently: true })!;
@@ -156,47 +159,75 @@ export function fitName(svg: SVGSVGElement, group: SVGGElement, o: FitOptions): 
   g.fillText(ch, (m.actualBoundingBoxLeft * S * kx + 2) / kx, m.actualBoundingBoxAscent * S + 2);
   g.restore();
   const measured = counterFromRaster(g.getImageData(0, 0, cw, chh).data, cw, chh, (rx, ry) => [ink.x + (rx - 2) / S, ink.y + (ry - 2) / S]) ?? { ink, counter: { x: ink.x + ink.w * 0.21, y: ink.y + ink.h * 0.145, w: ink.w * 0.58, h: ink.h * 0.71 }, gaps: [] };
-  return { size, limitedBy, texts: visible, portal, others, block, ink: measured.ink, counter: measured.counter, gaps: measured.gaps };
+  return { size, limitedBy, texts: visible, portal, others, block, ink: measured.ink, counter: measured.counter, gaps: measured.gaps, rows: 'rows' in measured ? measured.rows : undefined };
 }
 
 /** Caixa de tinta, vãos linha a linha e contraforma a partir de um raster (alfa > 128), já convertidos a unidades SVG. */
-function counterFromRaster(px: Uint8ClampedArray, cw: number, chh: number, toUnits: (rx: number, ry: number) => [number, number]): { ink: Rect; counter: Rect; gaps: Fit['gaps'] } | null {
-  const on = (x: number, y: number) => px[(y * cw + x) * 4 + 3]! > 128;
+function counterFromRaster(px: Uint8ClampedArray, cw: number, chh: number, toUnits: (rx: number, ry: number) => [number, number]): { ink: Rect; counter: Rect; gaps: Fit['gaps']; rows: NonNullable<Fit['rows']> } | null {
+  const a = (x: number, y: number) => px[(y * cw + x) * 4 + 3]!;
+  const on = (x: number, y: number) => a(x, y) > 128;
   let x0 = cw, x1 = -1, y0 = chh, y1 = -1;
-  for (let y = 0; y < chh; y++) for (let x = 0; x < cw; x++) if (on(x, y)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  for (let y = 0; y < chh; y++) for (let x = 0; x < cw; x++) if (a(x, y) > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
   if (x1 < 0) return null;
   const [ix, iy] = toUnits(x0, y0), [jx, jy] = toUnits(x1 + 1, y1 + 1);
   const ink: Rect = { x: ix, y: iy, w: jx - ix, h: jy - iy };
+  // bordas com precisão subpixel pela cobertura do antialiasing: o pixel de borda tem alfa ≈ fração coberta
+  const edgeL = (x: number, y: number) => x + 1 - a(x, y) / 255; // borda à esquerda da tinta que começa em x
+  const edgeR = (x: number, y: number) => x + a(x, y) / 255; // borda à direita da tinta que termina em x
+  /** vão entre a haste e o bojo numa linha: [fim da haste, início do bojo] em px fracionários */
   const gapRow = (y: number): [number, number] | null => {
-    let x = x0; while (x <= x1 && !on(x, y)) x++; while (x <= x1 && on(x, y)) x++; const a = x; while (x <= x1 && !on(x, y)) x++;
-    return x <= x1 && x > a ? [a, x] : null;
+    let x = x0; while (x <= x1 && !on(x, y)) x++; if (x > x1) return null;
+    while (x <= x1 && on(x, y)) x++; // x = primeiro px "não-tinta" (alfa ≤ 128) depois da haste
+    let g = x; while (g <= x1 && !on(g, y)) g++; if (g > x1 || g - x < 2) return null;
+    // bordas reais: último px com alguma tinta da haste e primeiro px com alguma tinta do bojo (alfa > 8)
+    let j = x; while (j + 1 < g && a(j, y) <= 8) { /* nunca */ break; } j = a(x, y) > 8 ? x : x - 1;
+    let i = g; while (i - 1 > j && a(i - 1, y) > 8) i--;
+    return [edgeR(j, y), edgeL(i, y)];
   };
   const gaps: Fit['gaps'] = [];
-  for (let yy = y0; yy <= y1; yy += 2) {
+  const rows: NonNullable<Fit['rows']> = [];
+  for (let yy = y0; yy <= y1; yy++) {
+    let xa = x0; while (xa <= x1 && a(xa, yy) <= 8) xa++; let xb = x1; while (xb >= xa && a(xb, yy) <= 8) xb--;
+    if (xa > xb) continue;
     const r = gapRow(yy);
-    if (r) { const [gx0, gy] = toUnits(r[0], yy); const [gx1] = toUnits(r[1], yy); gaps.push({ y: gy, x0: gx0, x1: gx1 }); }
+    if (r && (yy - y0) % 2 === 0) { const [gx0, gy] = toUnits(r[0], yy); const [gx1] = toUnits(r[1], yy); gaps.push({ y: gy, x0: gx0, x1: gx1 }); }
+    const [ua, yc] = toUnits(edgeL(xa, yy), yy + 0.5); const [ub] = toUnits(edgeR(xb, yy), yy + 0.5);
+    const row: NonNullable<Fit['rows']>[number] = { y: yc, xa: ua, xb: ub };
+    if (r) { row.x0 = toUnits(r[0], yy)[0]; row.x1 = toUnits(r[1], yy)[0]; }
+    rows.push(row);
   }
   const mid = gaps.filter((g) => g.y > ink.y + ink.h * 0.3 && g.y < ink.y + ink.h * 0.7);
   if (!mid.length || gaps.length < 4) return null;
   const cx0 = Math.max(...mid.map((g) => g.x0)), cx1 = Math.min(...mid.map((g) => g.x1));
   const [, rowH] = toUnits(0, 2); const [, row0] = toUnits(0, 0);
   const counter: Rect = { x: cx0, y: gaps[0]!.y, w: cx1 - cx0, h: gaps[gaps.length - 1]!.y + (rowH - row0) - gaps[0]!.y };
-  return { ink, counter, gaps };
+  return { ink, counter, gaps, rows };
 }
 
-let rasterFace: Promise<FontFace> | null = null;
-/** A webfont carregada de novo, pelos bytes, como FontFace própria ('ZdbRaster'): o canvas usa exatamente esta fonte. */
-function rasterFont(url: string): Promise<FontFace> {
-  rasterFace ??= fetch(url).then((r) => r.arrayBuffer()).then(async (buf) => {
-    const face = new FontFace('ZdbRaster', buf, { weight: '100 900', stretch: '62% 125%' });
-    await face.load(); document.fonts.add(face); return face;
-  });
-  return rasterFace;
+let rasterBytes: Promise<ArrayBuffer> | null = null;
+const rasterFaces = new Map<string, Promise<string>>();
+/** A webfont carregada de novo, pelos bytes, como FontFace própria por valor do eixo de largura: o descritor
+ *  `stretch` fixado num único valor faz o canvas (que só aceita palavras-chave em `fontStretch`) renderizar exatamente
+ *  a instância do texto vivo — o valor pedido é limitado ao intervalo do descritor. Devolve o nome da família. */
+function rasterFont(url: string, stretchPct: number): Promise<string> {
+  rasterBytes ??= fetch(url).then((r) => r.arrayBuffer());
+  const key = stretchPct.toFixed(3);
+  let face = rasterFaces.get(key);
+  if (!face) {
+    const family = `ZdbRaster ${key}`;
+    face = rasterBytes.then(async (buf) => {
+      const ff = new FontFace(family, buf, { weight: '100 900', stretch: `${key}%` });
+      await ff.load(); document.fonts.add(ff); return family;
+    });
+    rasterFaces.set(key, face);
+  }
+  return face;
 }
 
-/** Proporções do D da Archivo ExtraBold (medidas no raster) em relação à caixa de avanço do glifo real — último recurso. */
-/** (em relação ao CORPO, não ao avanço: o eixo de largura muda o avanço mas quase não muda a tinta do D) */
-const D_RATIOS = { inkX: 0.017, inkW: 0.655, inkTop: 0.672, counterX: 0.364, counterW: 0.37, counterY: 0.09, counterH: 0.826 };
+/** Proporções do D da Archivo ExtraBold (medidas no raster da própria webfont, eixo de largura a 100%) — último recurso.
+ *  Tinta em relação ao CORPO e ao avanço real (o eixo de largura alarga o avanço e a tinta na mesma medida; as
+ *  barras laterais ficam ≈ 0,12 do corpo); contraforma em relação à caixa de tinta. */
+const D_RATIOS = { inkX: 0.074, sideBearings: 0.12, inkTop: 0.688, counterX: 0.283, counterW: 0.386, counterY: 0.207, counterH: 0.59 };
 
 export type CounterSource = 'canvas' | 'fontface' | 'ratio';
 export async function refineCounter(f: Fit, o: FitOptions, fontUrl: string): Promise<{ fit: Fit; source: CounterSource; advanceDelta: number } | null> {
@@ -206,27 +237,28 @@ export async function refineCounter(f: Fit, o: FitOptions, fontUrl: string): Pro
     const baseline = +portal.getAttribute('y')!;
     const ls = parseFloat(getComputedStyle(portal).letterSpacing) || 0;
     const liveAdvance = ext.width - ls; // avanço do glifo real, sem o espaçamento
-    await rasterFont(fontUrl);
-    const S = 256 / Math.max(ext.width, ext.height);
+    const stretchPct = parseFloat(portal.style.fontStretch) || 100;
+    const family = await rasterFont(fontUrl, stretchPct);
+    const S = 1024 / Math.max(ext.width, ext.height);
     const pad = Math.ceil(0.12 * size * S);
     const cw = Math.ceil(ext.width * S) + pad * 2, chh = Math.ceil(ext.height * S) + pad * 2;
     const c = document.createElement('canvas'); c.width = cw; c.height = chh;
     const g = c.getContext('2d', { willReadFrequently: true })!;
-    g.font = `${o.weight} ${(size * S).toFixed(2)}px ZdbRaster`;
-    if (canStretch) setStretch(g, portal.style.fontStretch || '100%');
+    g.font = `${o.weight} ${(size * S).toFixed(2)}px "${family}"`;
+    if (canStretch) setStretch(g, 'normal'); // a instância vem do descritor da face, não daqui
     // o avanço no canvas tem de bater com o do glifo real: se não bate, o canvas não está usando a mesma fonte/eixo
     const adv = g.measureText(ch).width / S;
     const advanceDelta = Math.abs(adv - liveAdvance) / liveAdvance;
     if (advanceDelta <= 0.03) {
       g.fillStyle = '#fff'; g.fillText(ch, pad, (baseline - ext.y) * S + pad); // x = pad ⇒ origem do glifo; y = baseline no raster
       const r = counterFromRaster(g.getImageData(0, 0, cw, chh).data, cw, chh, (rx, ry) => [ext.x + (rx - pad) / S, ext.y + (ry - pad) / S]);
-      if (r && r.ink.w > ext.width * 0.5 && r.ink.w < ext.width * 1.3) return { fit: { ...f, ink: r.ink, counter: r.counter, gaps: r.gaps }, source: 'fontface', advanceDelta };
+      if (r && r.ink.w > ext.width * 0.5 && r.ink.w < ext.width * 1.3) return { fit: { ...f, ink: r.ink, counter: r.counter, gaps: r.gaps, rows: r.rows }, source: 'fontface', advanceDelta };
     }
     // último recurso: proporções conhecidas do D, ancoradas na caixa de avanço do glifo REAL (nunca numa fonte substituta)
     const R = D_RATIOS;
-    const ink: Rect = { x: ext.x + R.inkX * size, y: baseline - R.inkTop * size, w: R.inkW * size, h: R.inkTop * size };
+    const ink: Rect = { x: ext.x + R.inkX * size, y: baseline - R.inkTop * size, w: Math.max(size * 0.3, liveAdvance - R.sideBearings * size), h: R.inkTop * size };
     const counter: Rect = { x: ink.x + R.counterX * ink.w, y: ink.y + R.counterY * ink.h, w: R.counterW * ink.w, h: R.counterH * ink.h };
     const gaps: Fit['gaps'] = []; for (let k = 0; k <= 20; k++) gaps.push({ y: counter.y + (counter.h * k) / 20, x0: counter.x, x1: counter.x + counter.w });
-    return { fit: { ...f, ink, counter, gaps }, source: 'ratio', advanceDelta };
+    return { fit: { ...f, ink, counter, gaps, rows: undefined }, source: 'ratio', advanceDelta };
   } catch { return null; }
 }
