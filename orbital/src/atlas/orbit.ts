@@ -32,17 +32,42 @@ export function ellipsePath(o: Orbit, k = 1, steps = 144): string {
 /** Fração inicial do trilho em que o palco anterior ainda cobre este (sobreposição de uma tela). */
 let offset = 0;
 export function setTrackOffset(q0: number): void { offset = q0; }
-export const SETTLE = 0.17;
-export const settleRange = (): [number, number] => [offset, offset + SETTLE];
-export const PLATEAU = 0.16, TRANSITION = 0.085;
-export function plateauStart(i: number): number { return offset + SETTLE + i * (PLATEAU + TRANSITION); }
-export function plateauCenter(i: number): number { return Math.min(1, plateauStart(i) + PLATEAU / 2); }
+
+/**
+ * RITMO do Atlas em svh (altura útil da tela): o assentamento (revelação Arrival → Atlas), o platô de cada mundo,
+ * a transição entre mundos (a órbita gira 90°) e o último platô (MM Editorial, até The Origin assumir).
+ * `ease`: curva do foco na transição. `drift`: deriva mínima da mídia em foco dentro do platô (resposta contínua ao gesto).
+ * Presets do estudo de ritmo (`?atlas=current|a|b`): o atual é o baseline aprovado; A ≈ −24 %, B ≈ −35 % de rolagem.
+ */
+export interface AtlasRhythm { settle: number; plateau: number; transition: number; last: number; ease: 'quart' | 'cubic' | 'sine'; drift: number }
+export const RHYTHMS: Record<string, AtlasRhythm> = {
+  current: { settle: 105.4, plateau: 99.2, transition: 52.7, last: 58.9, ease: 'quart', drift: 0 }, // = 0,17 · 0,16 · 0,085 de 620 svh
+  a: { settle: 96, plateau: 52, transition: 56, last: 52, ease: 'sine', drift: 10 },
+  b: { settle: 90, plateau: 42, transition: 49, last: 42, ease: 'sine', drift: 10 },
+};
+let R: AtlasRhythm = RHYTHMS.current!;
+export function setRhythm(name: string): AtlasRhythm { R = RHYTHMS[name] ?? RHYTHMS.current!; return R; }
+export const rhythm = (): AtlasRhythm => R;
+/** trajeto total em svh (sem a cauda nem o palco) */
+export const travelSvh = (): number => R.settle + 3 * (R.plateau + R.transition) + R.last;
+const frac = (svh: number) => svh / travelSvh();
+export const settleRange = (): [number, number] => [offset, offset + frac(R.settle)];
+export const plateauFrac = (): number => frac(R.plateau);
+export const transitionFrac = (): number => frac(R.transition);
+export function plateauStart(i: number): number { return offset + frac(R.settle) + i * (frac(R.plateau) + frac(R.transition)); }
+export function plateauCenter(i: number): number { return Math.min(1, plateauStart(i) + Math.min(frac(R.plateau), i === 3 ? frac(R.last) : frac(R.plateau)) / 2); }
+/** posição 0..1 dentro do platô do mundo i (0 = entrou, 1 = vai sair); fora do platô, limitado */
+export function plateauProgress(q: number, i: number): number { const a = plateauStart(i); return remap(q, a, a + (i === 3 ? frac(R.last) : frac(R.plateau))); }
+const easeInOutCubic = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const easeInOutSine = (t: number): number => -(Math.cos(Math.PI * t) - 1) / 2;
+const EASES = { quart: easeInOutQuart, cubic: easeInOutCubic, sine: easeInOutSine };
 /** foco contínuo 0..3 em função do progresso do trilho */
 export function focusAt(q: number): number {
   let f = 0;
+  const ease = EASES[R.ease];
   for (let i = 0; i < 3; i++) {
-    const a = plateauStart(i) + PLATEAU, b = a + TRANSITION;
-    f += easeInOutQuart(remap(q, a, b));
+    const a = plateauStart(i) + frac(R.plateau), b = a + frac(R.transition);
+    f += ease(remap(q, a, b));
   }
   return f;
 }

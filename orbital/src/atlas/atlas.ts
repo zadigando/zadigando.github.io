@@ -5,7 +5,7 @@ import { clamp, coverRectMin, easeInOutSine, easeOutExpo, lerp, remap, smoothste
 import { SCENES } from '../config';
 import { worlds, pad, type World } from '../content/worlds';
 import { getLang, onLang, pick, t } from '../core/i18n';
-import { angleOf, focusAt, nearestFocus, plateauCenter, setTrackOffset, settleRange } from './orbit';
+import { angleOf, focusAt, nearestFocus, plateauCenter, plateauProgress, rhythm, setTrackOffset, settleRange, travelSvh } from './orbit';
 import { apertureOf, boxAt, depthOf, stageLayout, type StageLayout } from './stageLayout';
 import type { FinalFrame } from '../arrival/arrival';
 
@@ -35,6 +35,8 @@ export interface Atlas {
  */
 export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getFrame: () => FinalFrame | null): Atlas {
   const track = createTrack('atlas', { tail: 2 }); // dois palcos de cauda: The Origin se sobrepõe e coreografa a saída
+  track.el.style.setProperty('--atlas-travel', String(travelSvh())); // altura do trilho = trajeto + palco + cauda
+  track.el.dataset.plateaus = JSON.stringify([0, 1, 2, 3].map((i) => plateauCenter(i)));
   const stage = track.stage;
   const svg = document.getElementById('orbit') as unknown as SVGSVGElement;
   const surfacesEl = document.getElementById('surfaces')!;
@@ -266,6 +268,9 @@ export function initAtlas(onEnter: (w: World, origin: HTMLElement) => void, getF
     // a coluna recua JUNTO com o quadro (mesma escala, mesmo deslocamento) e só se apaga ao sair da tela
     column.style.opacity = (late * (1 - smoothstep(0.16, 0.32, exit))).toFixed(3);
     column.style.transform = `translate(${shift.toFixed(1)}px, ${((1 - late) * 24).toFixed(1)}px)`;
+    // dentro do platô a mídia em foco deriva alguns px com a rolagem (resposta contínua ao gesto; a composição não muda)
+    const drift = rhythm().drift ? Math.round((plateauProgress(p, near) - 0.5) * -rhythm().drift) : 0; // px inteiros: nítido em repouso
+    stage.style.setProperty('--drift', `${drift}px`);
     const tr = Math.abs(f - near); // 0 no platô, 0.5 no meio da transição
     const cut = 1 - smoothstep(0.16, 0.5, tr);
     column.style.setProperty('--cut', cut.toFixed(3));

@@ -1,6 +1,6 @@
 /* ===== Capítulo 02 · The Orbital Atlas ===== */
 @property --tint { syntax: '<color>'; inherits: true; initial-value: #d9c9a3; }
-.track--atlas { height: 920vh; height: 920svh; } /* 720 de trajeto + 200 de cauda (a saída, coreografada por The Origin) */
+.track--atlas { height: calc(var(--atlas-travel, 620) * 1vh + 300vh); height: calc(var(--atlas-travel, 620) * 1svh + 300svh); } /* trajeto (ritmo em orbit.ts) + palco + 200 de cauda (a saída, coreografada por The Origin) */
 .track--atlas .stage { --mx: 0; --my: 0; --tint: #d9c9a3; background: var(--void); transition: --tint 0.7s var(--ease-in-out); }
 /* a luz do mundo em foco tinge o palco (a cor vem do próprio site) */
 .track--atlas .stage::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0; opacity: var(--tint-on, 1);
@@ -44,6 +44,8 @@ html[data-pointer='coarse'] .surface[data-front='true'] .surface-visit { opacity
 .surface[data-strip='true'] { cursor: pointer; }
 .surface[data-strip='true']:hover { filter: brightness(0.85) saturate(0.95) !important; }
 .surface[data-front='true'] .surface-media { transform: translate(calc(var(--mx) * -5px), calc(var(--my) * -4px)); transition: transform 0.6s var(--ease-out); }
+/* deriva no platô (ritmos A/B): direto na mídia, sem transição e em px inteiros — a rolagem já é amortecida e o pôster fica nítido em repouso */
+.surface[data-front='true'] img, .surface[data-front='true'] video { transform: translateY(var(--drift, 0px)); }
 .surface[data-front='false'] .surface-media { transform: translate(calc(var(--mx) * 8px), calc(var(--my) * 5px)); transition: transform 0.9s var(--ease-out); }
 
 /* centrada na vertical por `translate` (o `transform` inline é só a entrada), nunca abaixo do índice */

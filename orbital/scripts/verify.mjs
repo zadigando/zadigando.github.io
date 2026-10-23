@@ -11,7 +11,11 @@ import { chromium } from 'playwright-core';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const evidence = join(root, 'evidence');
 const PORT = 4187;
-const BASE = `http://127.0.0.1:${PORT}/orbital/`;
+const BASE0 = `http://127.0.0.1:${PORT}/orbital/`;
+// estudo de ritmo do Atlas: ATLAS=a|b acrescenta ?atlas= a todas as URLs
+const ATLAS = process.env.ATLAS || '';
+const url = (path = '') => { const [p, h] = path.split('#'); const qs = [p.replace(/^\?/, ''), ATLAS ? `atlas=${ATLAS}` : ''].filter(Boolean).join('&'); return BASE0 + (qs ? `?${qs}` : '') + (h ? `#${h}` : ''); };
+const BASE = url();
 if (!existsSync(join(root, 'dist', 'index.html'))) { console.error('dist/ não encontrado. Rode `npm run build` antes.'); process.exit(2); }
 mkdirSync(evidence, { recursive: true });
 
@@ -23,7 +27,8 @@ const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--stric
 for (let i = 0; i < 60; i++) { try { if ((await fetch(BASE)).ok) break; } catch { /* aguardando */ } await new Promise((r) => setTimeout(r, 200)); }
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium' });
 
-const VIEWPORTS = [
+const ONLY = process.env.VIEWPORT || ''; // VIEWPORT=nome roda só um viewport (depuração)
+const VIEWPORTS_ALL = [
   { name: 'desktop-1440x900', width: 1440, height: 900, dpr: 1, mobile: false, shots: true },
   { name: 'mac-1440x692', width: 1440, height: 692, dpr: 2, mobile: false, shots: true },
   { name: 'mac-1512x727', width: 1512, height: 727, dpr: 2, mobile: false },
@@ -34,6 +39,7 @@ const VIEWPORTS = [
   { name: 'tablet-768x1024', width: 768, height: 1024, dpr: 2, mobile: true },
   { name: 'phone-360x740', width: 360, height: 740, dpr: 2, mobile: true },
 ];
+const VIEWPORTS = ONLY ? VIEWPORTS_ALL.filter((v) => v.name === ONLY) : VIEWPORTS_ALL;
 const HEADER = 72;
 const watch = (page, label) => {
   page.on('console', (m) => { if (m.type() === 'error' && !/favicon/.test(m.text())) issues.push(`[${label}] ${m.text()}`); });
@@ -97,6 +103,7 @@ for (const V of VIEWPORTS) {
   const page = await ctx.newPage(); watch(page, V.name);
   await page.goto(BASE, { waitUntil: 'load' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(500);
   const T = await tracks(page);
+  const PLATEAUS = await page.evaluate(() => JSON.parse(document.getElementById('atlas').dataset.plateaus));
   const portrait = V.width < 721;
 
   // 1) nome: enche a medida (largura) e cabe na faixa útil (altura), sem nada por cima
@@ -157,7 +164,7 @@ for (const V of VIEWPORTS) {
 
   // 5) atlas: platôs levam cada mundo à frente; zonas seguras (coluna × frestas × quadro × núcleo)
   for (let i = 0; i < 4; i++) {
-    const q = 0.17 + i * 0.245 + 0.08;
+    const q = PLATEAUS[i];
     await go(page, T.atlas.start + q * (T.atlas.end - T.atlas.start), 900);
     const st = await page.evaluate(() => {
       const bb = (el) => el.getBoundingClientRect();
@@ -197,6 +204,7 @@ for (const V of VIEWPORTS) {
     await go(page, T.origin.start - 2, 1000); const sa = await page.screenshot();
     await go(page, T.origin.start + 2, 1000); const sb = await page.screenshot();
     const seam = rmseOf(sa, sb);
+    if (seam >= 0.01) { writeFileSync(join(evidence, `${V.name}__seam-origin-a.png`), sa); writeFileSync(join(evidence, `${V.name}__seam-origin-b.png`), sb); }
     check(`${V.name} · origin · corte invisível atlas → origin`, seam < 0.01, `RMSE ${seam}`);
     await go(page, E(0.02), 900); const s0 = await originState(page);
     if (!portrait) check(`${V.name} · origin · o núcleo parte exatamente do ponto da órbita do Atlas`, Math.hypot(s0.core.x - s0.dot.x, s0.core.y - s0.dot.y) < 0.6 && s0.core.op > 0.98, `Δ=${Math.hypot(s0.core.x - s0.dot.x, s0.core.y - s0.dot.y).toFixed(2)}px`);
@@ -217,10 +225,11 @@ for (const V of VIEWPORTS) {
     await go(page, E(0), 800); await go(page, E(0.5), 1000); const rb = await page.screenshot();
     const rev = rmseOf(ra, rb);
     check(`${V.name} · origin · reversível (mesmo quadro ao descer e ao subir)`, rev < 0.01, `RMSE ${rev}`);
-    const plateau4 = T.atlas.start + (0.17 + 3 * 0.245 + 0.08) * (T.atlas.end - T.atlas.start);
+    const plateau4 = T.atlas.start + PLATEAUS[3] * (T.atlas.end - T.atlas.start);
     await go(page, plateau4, 1000); const pa = await page.screenshot();
     await go(page, E(1), 900); await go(page, plateau4, 1200); const pb = await page.screenshot();
     const back = rmseOf(pa, pb);
+    if (back >= 0.01) { writeFileSync(join(evidence, `${V.name}__back-a.png`), pa); writeFileSync(join(evidence, `${V.name}__back-b.png`), pb); }
     check(`${V.name} · origin → atlas · o platô da MM Editorial volta intacto`, back < 0.01, `RMSE ${back}`);
     // teclado: dentro do Origin as setas não puxam de volta para o Atlas (rolagem nativa)
     await go(page, E(0.3), 700); const yBefore = await page.evaluate(() => scrollY);
@@ -269,13 +278,13 @@ for (const V of VIEWPORTS) {
 
   // 7) link direto por hash leva ao platô do mundo (histórico/retorno nativos)
   const p2 = await ctx.newPage(); watch(p2, V.name + ' hash');
-  await p2.goto(BASE + '#mundo-rlg', { waitUntil: 'load' }); await p2.waitForTimeout(1400);
+  await p2.goto(url('#mundo-rlg'), { waitUntil: 'load' }); await p2.waitForTimeout(1400);
   const deep = await p2.evaluate(() => ({ front: document.querySelector('.surface[data-front="true"]')?.dataset.world, idx: [...document.querySelectorAll('.index-btn')].findIndex((b) => b.getAttribute('aria-current') === 'true'), dialog: document.getElementById('world').hidden }));
   check(`${V.name} · #mundo-rlg leva direto ao platô 03`, deep.front === 'rlg' && deep.idx === 2 && deep.dialog, JSON.stringify(deep));
-  await p2.goto(BASE + '#origin', { waitUntil: 'load' }); await p2.waitForTimeout(1600);
+  await p2.goto(url('#origin'), { waitUntil: 'load' }); await p2.waitForTimeout(1600);
   const deepO = await p2.evaluate(() => ({ e: +document.querySelector('#origin .stage').dataset.e, col: +getComputedStyle(document.getElementById('origin-column')).opacity, nav: document.querySelector('.hdr nav a[aria-current="true"]')?.dataset.chapter }));
   check(`${V.name} · #origin leva direto à constelação com o marco de 2020`, deepO.e >= 0.9 && deepO.col >= 0.9 && deepO.nav === 'origin', JSON.stringify(deepO));
-  await p2.goto(BASE + '#origin-2024', { waitUntil: 'load' }); await p2.waitForTimeout(1600);
+  await p2.goto(url('#origin-2024'), { waitUntil: 'load' }); await p2.waitForTimeout(1600);
   const deep24 = await p2.evaluate(() => ({ f: +document.querySelector('#origin .stage').dataset.focus, title: document.getElementById('origin-title').textContent, col: +getComputedStyle(document.getElementById('origin-column')).opacity }));
   check(`${V.name} · #origin-2024 leva direto ao marco de 2024`, Math.abs(deep24.f - 3) < 0.02 && deep24.title === 'Construir do zero' && deep24.col >= 0.9, JSON.stringify(deep24));
   await p2.close();
@@ -319,7 +328,7 @@ for (const V of VIEWPORTS) {
   await ctx2.close();
   const ctx3 = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'pt-BR' });
   const pu = await ctx3.newPage(); watch(pu, 'mode=static');
-  await pu.goto(BASE + '?mode=static', { waitUntil: 'load' }); await pu.waitForTimeout(400);
+  await pu.goto(url('?mode=static'), { waitUntil: 'load' }); await pu.waitForTimeout(400);
   check('?mode=static · modo estático por URL (sem botão no cabeçalho)', await pu.evaluate(() => document.documentElement.dataset.mode === 'static'));
   await ctx3.close();
 }
@@ -328,7 +337,7 @@ for (const V of VIEWPORTS) {
 {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'pt-BR' });
   const page = await ctx.newPage(); watch(page, 'scenes');
-  await page.goto(BASE + '?scenes=1', { waitUntil: 'load' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(500);
+  await page.goto(url('?scenes=1'), { waitUntil: 'load' }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(500);
   const T = await tracks(page);
   await go(page, T.atlas.start + 0.25 * (T.atlas.end - T.atlas.start), 900);
   check('scenes · "Entrar no mundo" visível e quadro em foco aponta para a cena', await page.evaluate(() => getComputedStyle(document.getElementById('enter')).display !== 'none' && /^#mundo-/.test(document.querySelector('.surface[data-front="true"]').getAttribute('href'))));
@@ -338,7 +347,7 @@ for (const V of VIEWPORTS) {
   await page.keyboard.press('Escape'); await page.waitForTimeout(600);
   check('scenes · Esc fecha e devolve o foco', await page.evaluate(() => document.getElementById('world').hidden && !document.getElementById('main').hasAttribute('inert')));
   const p2 = await ctx.newPage(); watch(p2, 'scenes hash');
-  await p2.goto(BASE + '?scenes=1#mundo-rlg', { waitUntil: 'load' }); await p2.waitForTimeout(1200);
+  await p2.goto(url('?scenes=1#mundo-rlg'), { waitUntil: 'load' }); await p2.waitForTimeout(1200);
   check('scenes · #mundo-rlg abre a cena direto', await p2.evaluate(() => !document.getElementById('world').hidden && document.getElementById('world-title').textContent === 'RLG Connect'));
   await p2.close(); await ctx.close();
 }

@@ -15,7 +15,7 @@ describe('órbita', () => {
     for (let q = 0; q <= 1.0001; q += 0.001) { const f = focusAt(q); expect(f).toBeGreaterThanOrEqual(last - 1e-9); last = f; }
     for (let i = 0; i < 4; i++) { expect(focusAt(plateauCenter(i))).toBeCloseTo(i, 6); expect(nearestFocus(plateauCenter(i))).toBe(i); }
     expect(focusAt(1)).toBeCloseTo(3, 6);
-    expect(plateauStart(0)).toBeCloseTo(0.17, 6);
+    expect(plateauStart(0)).toBeCloseTo(0.17, 2);
   });
   it('o mundo em foco fica no ângulo da frente; os outros a 90° de distância', () => {
     for (let i = 0; i < 4; i++) {

@@ -5,14 +5,16 @@ import { initArrival } from './arrival/arrival';
 import { initAtlas } from './atlas/atlas';
 import { initOrigin } from './origin/origin';
 import { initWorld } from './world/world';
-import { plateauCenter } from './atlas/orbit';
+import { plateauCenter, setRhythm } from './atlas/orbit';
 import { worldById } from './content/worlds';
 import { milestoneByYear } from './content/milestones';
-import { SCENES } from './config';
+import { ATLAS_RHYTHM, SCENES } from './config';
 import type { Lang } from './content/strings';
 
 installCapabilities();
 applyStatic();
+setRhythm(ATLAS_RHYTHM);
+document.documentElement.dataset.atlas = ATLAS_RHYTHM;
 document.documentElement.dataset.scenes = String(SCENES);
 
 // idioma

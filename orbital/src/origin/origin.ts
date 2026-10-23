@@ -293,7 +293,7 @@ export function initOrigin(atlas: Atlas): Origin {
       const len = Math.hypot(ex - sx, ey - sy);
       leader.setAttribute('x1', sx.toFixed(1)); leader.setAttribute('y1', sy.toFixed(1)); leader.setAttribute('x2', ex.toFixed(1)); leader.setAttribute('y2', ey.toFixed(1));
       const lead = near === 0 ? lead0 * (1 - smoothstep(0.02, 0.2, f)) : cut * (1 - fin);
-      leader.style.strokeDasharray = `${len.toFixed(1)}`; leader.style.strokeDashoffset = `${(len * (1 - lead)).toFixed(1)}`; leader.style.opacity = lead > 0 ? '1' : '0';
+      leader.style.strokeDasharray = `${len.toFixed(1)}`; leader.style.strokeDashoffset = `${(len * (1 - lead)).toFixed(1)}`; leader.style.opacity = lead > 0.002 ? '1' : '0'; // (fim do trilho em px fracionário: lead ≈ 0 é nada)
     } else leader.style.opacity = '0';
     indexEl.style.opacity = (started * (1 - fin)).toFixed(3);
     stage.dataset.e = e.toFixed(3); stage.dataset.j = j.toFixed(3); stage.dataset.z = cam.z.toFixed(3); stage.dataset.focus = f.toFixed(3);
