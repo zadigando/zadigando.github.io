@@ -179,6 +179,14 @@ Da PoC anterior (`/poc/`, 3D, preservada fora do repositório): o padrão de pal
 scroll nativo, a navegação por âncoras no palco, as capacidades, o dicionário de i18n e o harness de verificação,
 portados de hooks React para módulos TypeScript puros.
 
+## Ritmo do Atlas
+
+O ritmo (assentamento, platô, transição, último platô, curva do foco e deriva no platô) é um preset em svh em
+`src/atlas/orbit.ts`. O padrão é o `b` (≈ 405 svh de trajeto, curva seno, deriva de ±5 px): uma passada média de
+trackpad ≈ um mundo, validado no MacBook Air M4. `?atlas=current` reproduz o ritmo original (620 svh, curva quart)
+e `?atlas=a` o intermediário. Composições, frestas, órbita e mídias são as mesmas em qualquer preset; não há snapping
+nem interceptação de roda. A suíte roda em qualquer preset com `ATLAS=current|a|b npm run verify`.
+
 ## Dados astronômicos (The Origin)
 
 A carta de Escorpião usa posições reais: HYG Database v3.8 (David Nash, astronexus.com — derivada dos catálogos

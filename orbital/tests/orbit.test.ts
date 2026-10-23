@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { angleOf, depthAt, focusAt, nearestFocus, orbitFor, plateauCenter, plateauStart, pointAt, scaleAt, setTrackOffset } from '../src/atlas/orbit';
+import { angleOf, depthAt, focusAt, nearestFocus, orbitFor, plateauCenter, plateauStart, pointAt, scaleAt, setRhythm, setTrackOffset, travelSvh } from '../src/atlas/orbit';
 import { coverRect, objectPositionFor, logLerp, remap, smoothstep } from '../src/core/math';
 
 describe('órbita', () => {
@@ -15,7 +15,8 @@ describe('órbita', () => {
     for (let q = 0; q <= 1.0001; q += 0.001) { const f = focusAt(q); expect(f).toBeGreaterThanOrEqual(last - 1e-9); last = f; }
     for (let i = 0; i < 4; i++) { expect(focusAt(plateauCenter(i))).toBeCloseTo(i, 6); expect(nearestFocus(plateauCenter(i))).toBe(i); }
     expect(focusAt(1)).toBeCloseTo(3, 6);
-    expect(plateauStart(0)).toBeCloseTo(0.17, 2);
+    setRhythm('current'); expect(plateauStart(0)).toBeCloseTo(0.17, 2); expect(travelSvh()).toBeCloseTo(620, 0);
+    setRhythm('b'); expect(travelSvh()).toBeCloseTo(405, 0); expect(focusAt(plateauCenter(3))).toBeCloseTo(3, 6); expect(plateauStart(0)).toBeCloseTo(90 / 405, 6);
   });
   it('o mundo em foco fica no ângulo da frente; os outros a 90° de distância', () => {
     for (let i = 0; i < 4; i++) {

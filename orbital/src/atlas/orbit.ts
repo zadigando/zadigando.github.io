@@ -37,16 +37,17 @@ export function setTrackOffset(q0: number): void { offset = q0; }
  * RITMO do Atlas em svh (altura útil da tela): o assentamento (revelação Arrival → Atlas), o platô de cada mundo,
  * a transição entre mundos (a órbita gira 90°) e o último platô (MM Editorial, até The Origin assumir).
  * `ease`: curva do foco na transição. `drift`: deriva mínima da mídia em foco dentro do platô (resposta contínua ao gesto).
- * Presets do estudo de ritmo (`?atlas=current|a|b`): o atual é o baseline aprovado; A ≈ −24 %, B ≈ −35 % de rolagem.
+ * Presets do estudo de ritmo (`?atlas=current|a|b`): `current` é o ritmo original dos ciclos 1–4; A ≈ −24 %;
+ * B ≈ −35 % de rolagem — o PADRÃO desde a validação no MacBook Air M4 (uma passada média de trackpad ≈ um mundo).
  */
 export interface AtlasRhythm { settle: number; plateau: number; transition: number; last: number; ease: 'quart' | 'cubic' | 'sine'; drift: number }
 export const RHYTHMS: Record<string, AtlasRhythm> = {
-  current: { settle: 105.4, plateau: 99.2, transition: 52.7, last: 58.9, ease: 'quart', drift: 0 }, // = 0,17 · 0,16 · 0,085 de 620 svh
+  current: { settle: 105.4, plateau: 99.2, transition: 52.7, last: 58.9, ease: 'quart', drift: 0 }, // = 0,17 · 0,16 · 0,085 de 620 svh (original)
   a: { settle: 96, plateau: 52, transition: 56, last: 52, ease: 'sine', drift: 10 },
   b: { settle: 90, plateau: 42, transition: 49, last: 42, ease: 'sine', drift: 10 },
 };
-let R: AtlasRhythm = RHYTHMS.current!;
-export function setRhythm(name: string): AtlasRhythm { R = RHYTHMS[name] ?? RHYTHMS.current!; return R; }
+let R: AtlasRhythm = RHYTHMS.b!;
+export function setRhythm(name: string): AtlasRhythm { R = RHYTHMS[name] ?? RHYTHMS.b!; return R; }
 export const rhythm = (): AtlasRhythm => R;
 /** trajeto total em svh (sem a cauda nem o palco) */
 export const travelSvh = (): number => R.settle + 3 * (R.plateau + R.transition) + R.last;

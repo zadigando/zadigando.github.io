@@ -6,5 +6,6 @@
  */
 const q = new URLSearchParams(location.search);
 export const SCENES: boolean = q.get('scenes') === '1';
-/** Estudo de ritmo do Atlas: `?atlas=current|a|b` (ver RHYTHMS em atlas/orbit.ts). */
-export const ATLAS_RHYTHM: string = q.get('atlas') ?? 'current';
+/** Ritmo do Atlas (ver RHYTHMS em atlas/orbit.ts). Padrão: `b` (≈ −35 % de rolagem, validado no MacBook Air M4);
+ *  `?atlas=current|a|b` compara os presets do estudo de ritmo. */
+export const ATLAS_RHYTHM: string = q.get('atlas') ?? 'b';
