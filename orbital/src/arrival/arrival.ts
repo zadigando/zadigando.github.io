@@ -47,6 +47,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
   const ember = document.getElementById('ember') as unknown as SVGRectElement;
   const tint = document.getElementById('veil-tint') as unknown as SVGRectElement;
   const core = document.getElementById('core') as unknown as SVGCircleElement;
+  const coreHalo = document.getElementById('core-halo') as unknown as SVGCircleElement;
   const clipRect = document.getElementById('c-rect') as unknown as SVGRectElement;
   const XL = 'http://www.w3.org/1999/xlink';
   const ui = track.stage.querySelector<HTMLElement>('.arrival-ui')!;
@@ -165,6 +166,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     gwarm.setAttribute('cx', String(ccx)); gwarm.setAttribute('cy', String(ccy));
     const gr = Math.max(W, H) * 0.5; glow.setAttribute('r', String(gr)); gwarm.setAttribute('r', String(gr));
     core.setAttribute('cx', String(ccx)); core.setAttribute('cy', String(ccy));
+    coreHalo.setAttribute('cx', String(ccx)); coreHalo.setAttribute('cy', String(ccy));
   }
   /** `?debug=portal`: desenha a caixa de tinta do D (vermelho), a contraforma medida (verde) e a janela (ciano).
    *  Tecla `d`: baixa um JSON com o SVG inteiro naquele instante (estado exato para reprodução). */
@@ -239,8 +241,12 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     const wb = windowBox();
     const wcx = wb.x + wb.w / 2, wcy = wb.y + wb.h / 2;
     const spark = smoothstep(0.06, 0.18, p) * (1 - smoothstep(0.24, 0.42, p));
-    core.setAttribute('r', (Math.max(wb.w, 8) * lerp(0.05, 0.22, smoothstep(0.06, 0.3, p))).toFixed(2));
+    // ponto + halo largo e suave (a mesma estrutura do núcleo que vira Antares em The Origin)
+    const grow = smoothstep(0.06, 0.3, p);
+    core.setAttribute('r', (Math.max(wb.w, 8) * lerp(0.035, 0.12, grow)).toFixed(2));
     core.setAttribute('opacity', spark.toFixed(3));
+    coreHalo.setAttribute('r', (Math.max(wb.w, 8) * lerp(0.35, 1.1, grow)).toFixed(2));
+    coreHalo.setAttribute('opacity', (spark * 0.95).toFixed(3));
     const open = easeInOutSine(remap(p, 0.16, 0.46));
     const wh = wb.h * open, ww = wb.w * lerp(0.9, 1, open);
     clipRect.setAttribute('x', String(wcx - ww / 2)); clipRect.setAttribute('y', String(wcy - wh / 2));
@@ -324,7 +330,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     portalPath.style.opacity = '0';
     clipRect.setAttribute('x', String(wb.x)); clipRect.setAttribute('y', String(wb.y));
     clipRect.setAttribute('width', String(wb.w)); clipRect.setAttribute('height', String(wb.h));
-    windowImg.setAttribute('opacity', '1'); veilImg.setAttribute('opacity', '0'); midImg.setAttribute('opacity', '0'); tint.setAttribute('opacity', '0'); core.setAttribute('opacity', '0');
+    windowImg.setAttribute('opacity', '1'); veilImg.setAttribute('opacity', '0'); midImg.setAttribute('opacity', '0'); tint.setAttribute('opacity', '0'); core.setAttribute('opacity', '0'); coreHalo.setAttribute('opacity', '0');
     const media = portrait ? first.media.mobile : first.media.desktop;
     const r = coverRect(media.w, media.h, wb, media.focal);
     windowImg.setAttribute('x', String(r.x)); windowImg.setAttribute('y', String(r.y)); windowImg.setAttribute('width', String(r.w)); windowImg.setAttribute('height', String(r.h));

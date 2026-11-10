@@ -62,7 +62,12 @@
               <stop offset="0.58" stop-color="#c98a35"/>
               <stop offset="1" stop-color="#3b2410"/>
             </radialGradient>
-            <!-- o ponto de luz quente que precede a fenda -->
+            <!-- o ponto de luz quente que precede a fenda: o mesmo núcleo (ponto + halo largo) que vira Antares em The Origin -->
+            <radialGradient id="g-core-halo">
+              <stop offset="0" stop-color="#ffd9a3" stop-opacity="0.55"/>
+              <stop offset="0.35" stop-color="#ffb870" stop-opacity="0.16"/>
+              <stop offset="1" stop-color="#ffb870" stop-opacity="0"/>
+            </radialGradient>
             <radialGradient id="g-core">
               <stop offset="0" stop-color="#fff8ea" stop-opacity="1"/>
               <stop offset="0.28" stop-color="#ffd9a3" stop-opacity="0.85"/>
@@ -79,6 +84,7 @@
             <image id="window" preserveAspectRatio="none" opacity="0"/>
             <rect id="veil-tint" class="veil-tint" fill="#e9a862" x="0" y="0" width="0" height="0" opacity="0"/>
           </g>
+          <circle id="core-halo" r="1" fill="url(#g-core-halo)" opacity="0"/>
           <circle id="core" r="1" fill="url(#g-core)" opacity="0"/>
           <g id="name-text"></g>
         </svg>
