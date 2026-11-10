@@ -1,7 +1,8 @@
 // Vídeo QUADRO A QUADRO da experiência (sobre o build em dist/): cada quadro = rolagem nativa até uma
 // posição → espera o amortecimento convergir → screenshot. Mostra composição e continuidade reais;
 // o ritmo é o da montagem (não mede fluidez de GPU).
-// uso: node scripts/capture-video.mjs <saída.mp4> [desktop|mac|mobile] [fps] [origin:<segundos>]
+// uso: node scripts/capture-video.mjs <saída.mp4> [desktop|mac|mobile] [fps] [origin:<segundos>|arrival:<segundos>]
+//   DIST=<pasta> serve outro build (p. ex. um baseline guardado) em vez de dist/ — comparações antes/depois
 //   (mac = 1440×692, viewport de MacBook com a barra do navegador · origin:40 = só a transição Atlas → Origin, ida em 40 s e volta)
 import { spawn, execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -14,13 +15,14 @@ const out = process.argv[2] || join(root, 'evidence', 'video', 'orbital.mp4');
 const fmt = process.argv[3] || 'desktop';
 const FPS = Number(process.argv[4] || 24);
 const onlyOrigin = /^origin:/.test(process.argv[5] || '') ? Number(process.argv[5].slice(7)) : 0;
+const onlyArrival = /^arrival:/.test(process.argv[5] || '') ? Number(process.argv[5].slice(8)) : 0;
 const F = { desktop: { width: 1440, height: 900, dpr: 1, mobile: false }, mac: { width: 1440, height: 692, dpr: 1, mobile: false }, mobile: { width: 390, height: 844, dpr: 2, mobile: true } }[fmt];
 if (!F) { console.error('formato desconhecido:', fmt); process.exit(2); }
 const frames = out.replace(/\.mp4$/, '') + '-frames';
 rmSync(frames, { recursive: true, force: true }); mkdirSync(frames, { recursive: true }); mkdirSync(dirname(out), { recursive: true });
 
 const PORT = 4186;
-const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], { cwd: root, stdio: 'ignore' });
+const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1', ...(process.env.DIST ? ['--outDir', process.env.DIST] : [])], { cwd: root, stdio: 'ignore' });
 for (let i = 0; i < 60; i++) { try { if ((await fetch(`http://127.0.0.1:${PORT}/orbital/`)).ok) break; } catch { /* aguardando */ } await new Promise((r) => setTimeout(r, 200)); }
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium' });
 const ctx = await browser.newContext({ viewport: { width: F.width, height: F.height }, deviceScaleFactor: F.dpr, isMobile: F.mobile, hasTouch: F.mobile, locale: 'pt-BR' });
@@ -43,7 +45,16 @@ const originSegs = (dur) => [
   { dur: dur * 0.5, from: T.origin.end, to: T.origin.start, e: (t) => t },
   { dur: 1, from: T.origin.start, to: T.origin.start },
 ];
-const segs = onlyOrigin ? [{ dur: 1, from: T.origin.start, to: T.origin.start }, ...originSegs(onlyOrigin)] : [
+// The Arrival: ida lenta até o fim da travessia e um pouco do assentamento do Atlas (continuidade), parada, volta
+const arrivalSegs = (dur) => [
+  { dur: 1, from: 0, to: 0 },
+  { dur, from: 0, to: T.arrival.end, e: (t) => t },
+  { dur: dur * 0.12, from: T.atlas.start, to: T.atlas.start + 0.2 * (T.atlas.end - T.atlas.start), e: (t) => t },
+  { dur: 1.2, from: T.atlas.start + 0.2 * (T.atlas.end - T.atlas.start), to: T.atlas.start + 0.2 * (T.atlas.end - T.atlas.start) },
+  { dur: dur * 0.5, from: T.atlas.start + 0.2 * (T.atlas.end - T.atlas.start), to: 0, e: (t) => t },
+  { dur: 1, from: 0, to: 0 },
+];
+const segs = onlyArrival ? arrivalSegs(onlyArrival) : onlyOrigin ? [{ dur: 1, from: T.origin.start, to: T.origin.start }, ...originSegs(onlyOrigin)] : [
   { dur: 1.2, from: 0, to: 0 },
   { dur: 9, from: 0, to: T.arrival.end, e: ease },
   { dur: 0.8, from: T.arrival.end, to: T.arrival.end },

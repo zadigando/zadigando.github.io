@@ -42,7 +42,13 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
   const glow = document.getElementById('glow') as unknown as SVGCircleElement;
   const gwarm = document.getElementById('g-warm') as unknown as SVGRadialGradientElement;
   const windowImg = document.getElementById('window') as unknown as SVGImageElement;
+  const veilImg = document.getElementById('window-veil') as unknown as SVGImageElement;
+  const midImg = document.getElementById('window-mid') as unknown as SVGImageElement;
+  const ember = document.getElementById('ember') as unknown as SVGRectElement;
+  const tint = document.getElementById('veil-tint') as unknown as SVGRectElement;
+  const core = document.getElementById('core') as unknown as SVGCircleElement;
   const clipRect = document.getElementById('c-rect') as unknown as SVGRectElement;
+  const XL = 'http://www.w3.org/1999/xlink';
   const ui = track.stage.querySelector<HTMLElement>('.arrival-ui')!;
   const hdr = document.getElementById('hdr')!;
   const first = worlds[0]!;
@@ -110,7 +116,9 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
       buildPortalPath(); placeWindow(); computeFinalBox(); lastKey = ''; render(progress.value, true); renderStatic(); drawDebug(); opts.onComposed();
     });
     const media = portrait ? first.media.mobile : first.media.desktop;
-    windowImg.setAttributeNS('http://www.w3.org/1999/xlink', 'href', media.poster);
+    windowImg.setAttributeNS(XL, 'href', media.poster);
+    veilImg.setAttributeNS(XL, 'href', media.veil ?? media.poster);
+    midImg.setAttributeNS(XL, 'href', media.mid ?? media.poster);
     placeWindow();
     computeFinalBox();
     lastKey = '';
@@ -156,6 +164,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     glow.setAttribute('cx', String(ccx)); glow.setAttribute('cy', String(ccy));
     gwarm.setAttribute('cx', String(ccx)); gwarm.setAttribute('cy', String(ccy));
     const gr = Math.max(W, H) * 0.5; glow.setAttribute('r', String(gr)); gwarm.setAttribute('r', String(gr));
+    core.setAttribute('cx', String(ccx)); core.setAttribute('cy', String(ccy));
   }
   /** `?debug=portal`: desenha a caixa de tinta do D (vermelho), a contraforma medida (verde) e a janela (ciano).
    *  Tecla `d`: baixa um JSON com o SVG inteiro naquele instante (estado exato para reprodução). */
@@ -223,14 +232,20 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     fit.portal.style.opacity = (1 - vec).toFixed(3);
     portalPath.style.opacity = vec.toFixed(3);
     portalPath.style.fill = fill; portalPath.style.stroke = fit.portal.style.stroke; portalPath.style.strokeWidth = fit.portal.style.strokeWidth;
-    // 2) a janela abre como uma fenda de luz, do centro da contraforma até a abertura inteira
-    const open = easeInOutSine(remap(p, 0.16, 0.46));
+    // 2) A LUZ DO OUTRO LADO. Antes de haver imagem há luz: um ponto quente no centro da contraforma, que se
+    //    abre numa fenda iluminada (a mesma luz que contorna as letras vem de dentro do D). O mundo só aparece
+    //    como consequência da aproximação: primeiro um campo de luz e cor (o poster desfocado e aquecido), depois
+    //    formas suaves, e só na passagem pela borda do D a interface nítida com as suas cores reais.
     const wb = windowBox();
-    const wh = wb.h * open, ww = wb.w * lerp(0.9, 1, open);
     const wcx = wb.x + wb.w / 2, wcy = wb.y + wb.h / 2;
+    const spark = smoothstep(0.06, 0.18, p) * (1 - smoothstep(0.24, 0.42, p));
+    core.setAttribute('r', (Math.max(wb.w, 8) * lerp(0.05, 0.22, smoothstep(0.06, 0.3, p))).toFixed(2));
+    core.setAttribute('opacity', spark.toFixed(3));
+    const open = easeInOutSine(remap(p, 0.16, 0.46));
+    const wh = wb.h * open, ww = wb.w * lerp(0.9, 1, open);
     clipRect.setAttribute('x', String(wcx - ww / 2)); clipRect.setAttribute('y', String(wcy - wh / 2));
     clipRect.setAttribute('width', String(ww)); clipRect.setAttribute('height', String(Math.max(0, wh)));
-    windowImg.setAttribute('opacity', open > 0.001 ? '1' : '0');
+    ember.setAttribute('x', String(wb.x - wb.w * 0.1)); ember.setAttribute('y', String(wb.y - wb.h * 0.1)); ember.setAttribute('width', String(wb.w * 1.2)); ember.setAttribute('height', String(wb.h * 1.2));
 
     // 3) travessia: zoom em escala logarítmica (velocidade perceptual constante) com a janela SEMPRE no quadro:
     //    a posição da janela na tela vai monotonicamente de onde ela está no nome até o centro.
@@ -262,8 +277,19 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     const media = portrait ? first.media.mobile : first.media.desktop;
     const k = lerp(1.18, 1, z) * push;
     const r = coverRect(media.w, media.h, { x: wcx - (wb.w * k) / 2, y: wcy - (wb.h * k) / 2, w: wb.w * k, h: wb.h * k }, media.focal);
-    windowImg.setAttribute('x', String(r.x)); windowImg.setAttribute('y', String(r.y));
-    windowImg.setAttribute('width', String(r.w)); windowImg.setAttribute('height', String(r.h));
+    for (const im of [windowImg, veilImg, midImg]) { im.setAttribute('x', String(r.x)); im.setAttribute('y', String(r.y)); im.setAttribute('width', String(r.w)); im.setAttribute('height', String(r.h)); }
+    // camadas da revelação: véu (luz e cor) → formas suaves → nitidez. A nitidez e as cores reais chegam com a
+    // passagem pela borda do D (metade ao fim do mergulho, metade na saída): a descoberta é a travessia.
+    //   véu (campo de luz e cor) até a janela ocupar boa parte do quadro; formas suaves quando a borda do D já
+    //   emoldura a tela (z 0,62 → 0,86); nitidez metade no fim do mergulho, metade na saída pela borda.
+    const veilIn = smoothstep(0.3, 0.52, p);
+    const shapes = smoothstep(0.62, 0.86, z);
+    const sharp = 0.5 * smoothstep(0.9, 1, z) + 0.5 * smoothstep(0, 0.45, ex);
+    veilImg.setAttribute('opacity', (open > 0.001 ? veilIn * (1 - smoothstep(0.82, 0.96, z)) : 0).toFixed(3));
+    midImg.setAttribute('opacity', (open > 0.001 ? shapes * (1 - smoothstep(0.6, 1, ex)) : 0).toFixed(3));
+    windowImg.setAttribute('opacity', (open > 0.001 ? sharp : 0).toFixed(3));
+    tint.setAttribute('x', String(r.x)); tint.setAttribute('y', String(r.y)); tint.setAttribute('width', String(r.w)); tint.setAttribute('height', String(r.h));
+    tint.setAttribute('opacity', (open > 0.001 ? 0.45 * (1 - sharp) * veilIn : 0).toFixed(3));
 
     // interface mínima (indicação de rolagem) some quando a travessia começa; o cabeçalho sai durante o mergulho
     const uiOut = 1 - smoothstep(0.3, 0.48, p);
@@ -298,7 +324,7 @@ export function initArrival(opts: { onComposed: () => void }): Arrival {
     portalPath.style.opacity = '0';
     clipRect.setAttribute('x', String(wb.x)); clipRect.setAttribute('y', String(wb.y));
     clipRect.setAttribute('width', String(wb.w)); clipRect.setAttribute('height', String(wb.h));
-    windowImg.setAttribute('opacity', '1');
+    windowImg.setAttribute('opacity', '1'); veilImg.setAttribute('opacity', '0'); midImg.setAttribute('opacity', '0'); tint.setAttribute('opacity', '0'); core.setAttribute('opacity', '0');
     const media = portrait ? first.media.mobile : first.media.desktop;
     const r = coverRect(media.w, media.h, wb, media.focal);
     windowImg.setAttribute('x', String(r.x)); windowImg.setAttribute('y', String(r.y)); windowImg.setAttribute('width', String(r.w)); windowImg.setAttribute('height', String(r.h));

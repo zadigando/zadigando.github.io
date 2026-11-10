@@ -4,6 +4,7 @@
 .name .portal-path { paint-order: stroke fill; }
 .name text { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; fill: var(--bone); paint-order: stroke fill; stroke: none; }
 .name-bg { fill: var(--void); }
+.veil-tint { mix-blend-mode: multiply; }
 
 /* interface mínima: só a indicação discreta de rolagem (o nome é a abertura inteira) */
 .arrival-ui { position: absolute; inset: 0; z-index: 3; pointer-events: none; }

@@ -7,7 +7,8 @@
 export type Bi = { pt: string; en: string };
 /** `w`,`h`: tamanho natural do poster · `focal`: ponto (0..1) que a composição mantém no centro da janela */
 /** `focal`: ponto mantido no centro quando a superfície está à frente · `detail`: ponto mostrado nas frestas (recorte estreito, mesma escala) */
-export interface WorldMedia { poster: string; video?: string; w: number; h: number; focal: [number, number]; detail: [number, number] }
+/** `veil`/`mid`: o mesmo poster desfocado e aquecido (longe / perto), para a revelação pela contraforma do D — só o mundo 01 */
+export interface WorldMedia { poster: string; video?: string; w: number; h: number; focal: [number, number]; detail: [number, number]; veil?: string; mid?: string }
 export interface World {
   id: string;
   index: number;
@@ -32,7 +33,7 @@ export const worlds: readonly World[] = [
       en: 'A handmade football-boot atelier. A product site that leads from idea to order: discipline, parts, colours and the path to the commission.',
     },
     tint: '#d9c9a3',
-    media: { desktop: { poster: M + 'chiarella-desktop-poster.jpg', video: M + 'chiarella-desktop.mp4', w: 2880, h: 1800, focal: [0.72, 0.52], detail: [0.78, 0.52] }, mobile: { poster: M + 'chiarella-mobile-poster.jpg', video: M + 'chiarella-mobile.mp4', w: 780, h: 1688, focal: [0.5, 0.22], detail: [0.5, 0.3] } },
+    media: { desktop: { poster: M + 'chiarella-desktop-poster.jpg', video: M + 'chiarella-desktop.mp4', w: 2880, h: 1800, focal: [0.72, 0.52], detail: [0.78, 0.52], veil: M + 'chiarella-desktop-veil.jpg', mid: M + 'chiarella-desktop-mid.jpg' }, mobile: { poster: M + 'chiarella-mobile-poster.jpg', video: M + 'chiarella-mobile.mp4', w: 780, h: 1688, focal: [0.5, 0.22], detail: [0.5, 0.3], veil: M + 'chiarella-mobile-veil.jpg', mid: M + 'chiarella-mobile-mid.jpg' } },
     status: 'reference',
   },
   {
